@@ -1,0 +1,142 @@
+0.000 [ Info   ][Logger] No ORO_LOGLEVEL environment variable set.
+0.000 [ Info   ][Logger]  OROCOS version '2.4.0' compiled with GCC 4.5.2. Running in GNU/Linux.
+0.000 [ Info   ][Logger] Orocos Logging Activated at level : [ Warning] ( 4 ) 
+0.000 [ Info   ][Logger] Reference System Time is : 1313684442706029908 ticks ( 1.31368e+09 seconds ).
+0.000 [ Info   ][Logger] Logging is relative to this time.
+0.006 [ Info   ][Logger] No RTT_COMPONENT_PATH set. Using default: /
+0.006 [ Info   ][Logger] plugin 'rtt' not loaded before.
+0.006 [ Info   ][Logger] typekit 'rtt' not loaded before.
+0.007 [ Info   ][TypekitRepository::Import] Loading Typekit rtt-types.
+0.008 [ Info   ][TypekitRepository::Import] Loading Transport CORBA://rtt-types.
+0.008 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for ConnPolicy
+0.008 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for TaskContext
+0.008 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for array
+0.008 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for bool
+0.008 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for char
+0.008 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for double
+0.008 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for float
+0.008 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for int
+0.008 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for string
+0.008 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for uint
+0.008 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for void
+0.008 [ Info   ][TypekitRepository::Import] Loading Typekit /orogen/aggregator.
+0.008 [ Info   ][TypekitRepository::Import] Loading Transport CORBA:///orogen/aggregator.
+0.012 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /aggregator/StreamAlignerStatus
+0.012 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for ConnPolicy
+0.012 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for TaskContext
+0.012 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for array
+0.012 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for bool
+0.012 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for char
+0.012 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for double
+0.012 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for float
+0.012 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for int
+0.012 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for string
+0.012 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for uint
+0.012 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for void
+0.038 [ Info   ][TypekitRepository::Import] Loading Transport Typelib:///orogen/aggregator.
+0.038 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for /aggregator/StreamAlignerStatus
+0.039 [ Info   ][TypekitRepository::Import] Loading Typekit /orogen/base.
+0.041 [ Info   ][TypekitRepository::Import] TypeInfo for type '/std/string' already exists as 'string': I'll alias the original and install the new instance.
+0.041 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /std/string
+0.042 [ Info   ][TypekitRepository::Import] Loading Transport CORBA:///orogen/base.
+0.042 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /RTT/extras/ReadOnlyPointer</base/samples/frame/CompressedFrame>
+0.042 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /RTT/extras/ReadOnlyPointer</base/samples/frame/Frame>
+0.042 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /RTT/extras/ReadOnlyPointer</base/samples/frame/FramePair>
+0.042 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /aggregator/StreamAlignerStatus
+0.042 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /base/AUVMotionCommand
+0.042 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /base/AUVPositionCommand
+0.042 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /base/Matrix4d
+0.042 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /base/MotionCommand2D
+0.042 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /base/Pose
+0.042 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /base/SpeedCommand6D
+0.042 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /base/Time
+0.042 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /base/Vector3d
+0.042 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /base/Waypoint
+0.042 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /base/actuators/Command
+0.042 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /base/actuators/Status
+0.042 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /base/geometry/Spline<1>
+0.042 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /base/geometry/Spline<3>
+0.042 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /base/samples/DistanceImage
+0.042 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /base/samples/IMUSensors
+0.042 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /base/samples/LaserScan
+0.042 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /base/samples/Pointcloud
+0.042 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /base/samples/RigidBodyAcceleration
+0.042 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /base/samples/RigidBodyState
+0.042 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /base/samples/SonarScan
+0.042 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /base/samples/frame/CompressedFrame
+0.042 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /base/samples/frame/Frame
+0.042 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /base/samples/frame/FramePair
+0.042 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /base/samples/frame/frame_mode_t
+0.042 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /std/string
+0.042 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /std/vector</base/Vector3d>
+0.042 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for /std/vector</base/Waypoint>
+0.042 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for ConnPolicy
+0.043 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for TaskContext
+0.043 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for array
+0.043 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for bool
+0.043 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for char
+0.043 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for double
+0.043 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for float
+0.043 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for int
+0.043 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for string
+0.043 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for uint
+0.043 [ Info   ][TypekitRepository::Import] Registered new 'CORBA' transport for void
+0.076 [ Info   ][TypekitRepository::Import] Loading Transport Typelib:///orogen/base.
+0.076 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for /RTT/extras/ReadOnlyPointer</base/samples/frame/CompressedFrame>
+0.076 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for /RTT/extras/ReadOnlyPointer</base/samples/frame/Frame>
+0.076 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for /RTT/extras/ReadOnlyPointer</base/samples/frame/FramePair>
+0.076 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for /aggregator/StreamAlignerStatus
+0.077 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for /base/AUVMotionCommand
+0.077 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for /base/AUVPositionCommand
+0.077 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for /base/Matrix4d
+0.077 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for /base/MotionCommand2D
+0.077 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for /base/Pose
+0.077 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for /base/SpeedCommand6D
+0.077 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for /base/Time
+0.077 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for /base/Vector3d
+0.077 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for /base/Waypoint
+0.077 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for /base/actuators/Command
+0.077 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for /base/actuators/Status
+0.077 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for /base/geometry/Spline<1>
+0.077 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for /base/geometry/Spline<3>
+0.077 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for /base/samples/DistanceImage
+0.077 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for /base/samples/IMUSensors
+0.077 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for /base/samples/LaserScan
+0.077 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for /base/samples/Pointcloud
+0.077 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for /base/samples/RigidBodyAcceleration
+0.077 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for /base/samples/RigidBodyState
+0.077 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for /base/samples/SonarScan
+0.077 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for /base/samples/frame/CompressedFrame
+0.078 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for /base/samples/frame/Frame
+0.078 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for /base/samples/frame/FramePair
+0.078 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for /base/samples/frame/frame_mode_t
+0.078 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for /std/string
+0.078 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for /std/vector</base/Vector3d>
+0.078 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for /std/vector</base/Waypoint>
+0.078 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for bool
+0.078 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for char
+0.078 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for double
+0.078 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for float
+0.078 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for int
+0.078 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for string
+0.078 [ Info   ][TypekitRepository::Import] Registered new 'Typelib' transport for uint
+0.079 [ Info   ][Thread] Creating Thread for scheduler: 0
+0.079 [ Info   ][graph_slam] Thread created with scheduler type '0', priority 0 and period 0.
+0.079 [ Info   ][Thread] Creating Thread for scheduler: 0
+0.079 [ Info   ][GlobalEngine] Thread created with scheduler type '0', priority 0 and period 0.
+0.098 [ Info   ][./build/graph_slam_test::main()] graph_slam will be triggered when new data is available on InputPort distance_frames
+0.099 [ Info   ][./build/graph_slam_test::main()] graph_slam will be triggered when new data is available on InputPort dynamic_transformations
+0.099 [ Info   ][./build/graph_slam_test::main()] graph_slam will be triggered when new data is available on InputPort odometry_samples
+0.099 [ Info   ][./build/graph_slam_test::main()] graph_slam will be triggered when new data is available on InputPort static_transformations
+0.100 [ Info   ][Thread] Creating Thread for scheduler: 0
+0.100 [ Info   ][graph_slam] Thread created with scheduler type '0', priority 0 and period 0.
+0.100 [ Info   ][./build/graph_slam_test::main()] Creating new TaskContextServer for graph_slam
+0.101 [ Info   ][TaskContextServer()] CTaskContext 'graph_slam' found CORBA Naming Service.
+0.102 [ Info   ][TaskContextServer()] Successfully added CTaskContext 'graph_slam' to CORBA Naming Service.
+0.102 [ Info   ][./build/graph_slam_test::main()] Entering orb->run().
+2.257 [ Info   ][ShutdownOrb] Cleaning up TaskContextServers...
+2.257 [ Info   ][~TaskContextServer()] Successfully removed CTaskContext 'graph_slam' from CORBA Naming Service.
+2.258 [ Info   ][ShutdownOrb] Cleanup done.
+2.258 [ Info   ][ShutdownOrb] Orb Shutdown...done.
+2.258 [ Info   ][./build/graph_slam_test::main()] Breaking out of orb->run().
+2.261 [ Info   ][Logger] Orocos Logging Deactivated.

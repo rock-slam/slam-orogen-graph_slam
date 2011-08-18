@@ -1,0 +1,47 @@
+name "graph_slam"
+
+using_library 'hogman'
+using_library 'envire'
+using_library 'envire-viz'
+using_library 'vizkit'
+using_library 'pcl_registration-1.2'
+
+import_types_from 'base'
+import_types_from 'dense_stereo'
+
+task_context "Task" do
+
+    property('environment_debug_path', 'string').
+	doc 'if this property is set, the final environment will be written to the given file path.'
+
+    property('debug_viz', 'bool').
+	doc 'switch on/off the debug visualization'
+
+    property('start_pose', '/base/samples/RigidBodyState').
+	doc 'path to environment'
+
+    input_port('distance_frames', '/base/samples/DistanceImage').
+	needs_reliable_connection.
+	doc 'distance images'
+
+    transformer do
+	max_latency( 0.2 )
+
+	transformation("laser", "body")	
+	transformation("lcamera", "body")
+	transformation("body", "odometry")
+
+	align_port("distance_frames", 0.1)
+    end
+
+    port_driven
+end
+
+# Declares a deployment, i.e. an actual executable that contains various tasks.
+deployment "graph_slam_test" do
+    # This is a test deployment that should not be installed
+    do_not_install
+
+    task("graph_slam", "Task")
+end
+
