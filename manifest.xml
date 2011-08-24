@@ -5,5 +5,6 @@
     <depend package="slam/hogman"/>
     <depend package="slam/pcl"/>
     <depend package="slam/envire"/>
-    <depend package="image_processing/stereo"/>
+    <depend package="drivers/transformer"/>
+    <depend package="image_processing/orogen/stereo"/>
 </package>
