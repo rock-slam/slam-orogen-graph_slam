@@ -2,12 +2,10 @@ name "graph_slam"
 
 using_library 'hogman'
 using_library 'envire'
-using_library 'envire-viz'
-using_library 'vizkit'
 using_library 'pcl_registration-1.2'
 
 import_types_from 'base'
-import_types_from 'dense_stereo'
+import_types_from 'stereo'
 
 task_context "Task" do
 
