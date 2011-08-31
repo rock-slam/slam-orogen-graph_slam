@@ -35,21 +35,23 @@ Orocos::Process.spawn 'graph_slam_test', 'valgrind'=>false, "wait" => 1000 do |p
 
     graph_slam.environment_debug_path = out_file
 
-    replay.log.odometry.bodystate_samples.connect_to( graph_slam.bodystate_samples, :type => :buffer, :size => 1000 )
     replay.log.odometry.odometry_samples.connect_to( graph_slam.dynamic_transformations, :type => :buffer, :size => 1000 )
     replay.log.dynamixel.lowerDynamixel2UpperDynamixel.connect_to( graph_slam.dynamic_transformations, :type => :buffer, :size => 1000 )
-    if @log_replay.has_task? :dense_stereo and @log_replay.dense_stereo.has_port? :distance_frame
-        @log_replay.dense_stereo.distance_frame.connect_to( @eslam.distance_frames, :type => :buffer, :size => 2 )
-        @has_distance_images = true
+    if replay.log.has_task? :stereo and replay.log.stereo.has_port? :distance_frame
+        replay.log.stereo.distance_frame.connect_to( graph_slam.distance_frames, :type => :buffer, :size => 2 )
         puts "INFO: Using distance images."
     end
 
     tf = Asguard::Transform.new [:dynamixel]
     tf.setup_filters replay
 
+    replay.log.align( :use_sample_time )
+    graph_slam.debug_viz = true
+
     graph_slam.configure
     graph_slam.start
     tf.configure_task graph_slam
 
-    replay.log.run
+    Vizkit.control replay.log
+    Vizkit.exec
 end
