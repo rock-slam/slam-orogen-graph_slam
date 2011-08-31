@@ -18,17 +18,20 @@ namespace vizkit
 }
 
 namespace graph_slam {
+
+    class PoseGraph;
+
     class Task : public TaskBase
     {
 	friend class TaskBase;
     protected:
 
         virtual void distance_framesTransformerCallback(const base::Time &ts, const ::base::samples::DistanceImage &distance_frames_sample);
-        virtual void odometry_samplesTransformerCallback(const base::Time &ts, const ::base::samples::RigidBodyState &odometry_samples_sample);
 
 	QtThreadedWidget<vizkit::EnvireWidget> viz;
 
 	envire::Environment *env;
+	PoseGraph *graph;
 
     public:
         Task(std::string const& name = "graph_slam::Task", TaskCore::TaskState initial_state = Stopped);
@@ -72,7 +75,7 @@ namespace graph_slam {
          * component is stopped and recover() needs to be called before starting
          * it again. Finally, FatalError cannot be recovered.
          */
-        // void updateHook();
+        void updateHook();
 
         /** This hook is called by Orocos when the component is in the
          * RunTimeError state, at each activity step. See the discussion in
