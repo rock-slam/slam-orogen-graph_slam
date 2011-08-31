@@ -309,25 +309,18 @@ void Task::distance_framesTransformerCallback(const base::Time &ts, const ::base
     if( !_body2odometry.get( ts, body2odometry ) || !_lcamera2body.get( ts, lcamera2body ) )
 	return;
 
-    /*
-    // create envire node and maps
-    if( !distGrid )
-    {
-	// create new grid using the parameters from the distance image
-	distGrid = new envire::DistanceGrid( dimage );
+    // get the transformwithuncertainty
+    // TODO get the covariance from the transformer module
+    TransformWithUncertainty body2odometryTU( 
+	    body2odometry, Eigen::Matrix<double,6,6>::Identity() );
 
-	// distGrid has just been created and needs to be attached
-	distOp->addInput( distGrid );
-	distGrid->setFrameNode( distPc->getFrameNode() );
-    }
-    distGrid->copyFromDistanceImage( dimage );
-    distOp->updateAll();
-    
-    // add it to the pose graph
-    graph->addNode( fn );
+    std::cerr << "add node" << std::endl;
+    // initialize a new node, and add the sensor readings to it
+    graph->initNode( prevBody2Odometry.inverse() * body2odometryTU );
+    graph->addSensorReading( distance_frames_sample, lcamera2body );
+    graph->addNode();
 
-    graph->optimize();
-    */
+    prevBody2Odometry = body2odometryTU;
 }
 
 /// The following lines are template definitions for the various state machine

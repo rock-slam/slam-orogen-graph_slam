@@ -30,6 +30,7 @@ namespace graph_slam {
 
 	QtThreadedWidget<vizkit::EnvireWidget> viz;
 
+	envire::TransformWithUncertainty prevBody2Odometry;
 	envire::Environment *env;
 	PoseGraph *graph;
 
