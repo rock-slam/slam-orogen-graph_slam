@@ -185,24 +185,22 @@ public:
 
 	// perform the graph optimization
 	const int iterations = 5;
-	//optimizer->optimize( iterations, true );
+	optimizer->optimize( iterations, true );
 
 	// write the poses back to the environment
 	// for now, write all the poses back, could add an updated flag
-	/*
-	for( Graph::VertexIDMap::iterator it = optimizer->vertices().begin(); 
+	for( AISNavigation::Graph::VertexIDMap::iterator it = optimizer->vertices().begin(); 
 		it != optimizer->vertices().end(); it++ )
 	{
 	    const int id = it->first;
-	    const PoseGraph3D::Vertex* vertex = static_cast<PoseGraph3D::Vertex*>(it->second);
+	    const AISNavigation::PoseGraph3D::Vertex* vertex = static_cast<AISNavigation::PoseGraph3D::Vertex*>(it->second);
 
-	    envire::FrameNode::Ptr fn = env->getItem<FrameNode>( id ).get();
+	    envire::FrameNode::Ptr fn = env->getItem<envire::FrameNode>( id ).get();
 	    fn->setTransform( hogman2Eigen( vertex->transformation ) );
 	}
-	*/
 
 	// TODO see if we need to reassociate here 
-
+	
 	bodyFrame->setTransform( currentBodyFrame->getTransform() );
 	prevBodyFrame = currentBodyFrame;
 	currentBodyFrame = NULL;
@@ -262,8 +260,9 @@ public:
 	const double rot_error = 10.0/180.0*M_PI;
 	
 	Eigen::Matrix<double,6,1> cov_diag;
-	cov_diag << Eigen::Vector3d::Identity() * rot_error, 
-		 Eigen::Vector3d::Identity() * trans_error;
+	cov_diag << Eigen::Vector3d::Ones() * rot_error, 
+		 Eigen::Vector3d::Ones() * trans_error;
+
 	Eigen::Matrix<double,6,6> cov = 
 	    cov_diag.array().square().matrix().asDiagonal();
 
@@ -272,14 +271,12 @@ public:
 
 	// add the egde to the optimization framework 
 	// this will update an existing edge
-	/*
 	optimizer->addEdge( 
 		optimizer->vertex( prevBodyFrame->getUniqueId() ),
 		optimizer->vertex( currentBodyFrame->getUniqueId() ),
 		eigen2Hogman( body2bodyPrev ),
 		envireCov2HogmanInf( cov )
 		);
-	*/
     }
 
     ~PoseGraph()
