@@ -45,10 +45,10 @@ Matrix6 eigen2Hogman( const Eigen::Matrix<double,6,6>& eigen_matrix )
 Eigen::Affine3d hogman2Eigen( const Transformation3& hogman_transform )
 {
     Eigen::Quaterniond rotation( 
+	    hogman_transform.rotation().w(),
 	    hogman_transform.rotation().x(),
 	    hogman_transform.rotation().y(),
-	    hogman_transform.rotation().z(),
-	    hogman_transform.rotation().w() );
+	    hogman_transform.rotation().z() );
 
     Eigen::Translation3d translation(
 	    hogman_transform.translation().x(),
