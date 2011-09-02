@@ -12,6 +12,8 @@
 #include <envire/icp.hpp>
 #include <envire/icpConfigurationTypes.hpp>
 
+#include <envire/tools/GraphViz.hpp>
+
 using namespace graph_slam;
 using namespace envire;
 using namespace AISNavigation;
@@ -156,7 +158,7 @@ public:
 
 	    // distGrid has just been created and needs to be attached
 	    distOp->addInput( distGrid.get() );
-	    distGrid->setFrameNode( bodyFrame.get() );
+	    distGrid->setFrameNode( distFrame.get() );
 	}
 	distGrid->copyFromDistanceImage( distImage );
 
@@ -166,6 +168,9 @@ public:
 	distOp->addOutput( distPc.get() );
 
 	distOp->updateAll();
+
+	envire::GraphViz gv;
+	gv.writeToFile( env, "/tmp/gv.dot" );
     }	
 
     /** adds an initialized node, with optional sensor readings to the node graph
@@ -188,7 +193,7 @@ public:
 
 	// perform the graph optimization
 	const int iterations = 5;
-	optimizer->optimize( iterations, true );
+	//optimizer->optimize( iterations, true );
 
 	// write the poses back to the environment
 	// for now, write all the poses back, could add an updated flag
@@ -251,10 +256,12 @@ public:
 
 	// use the envire ICP implementation
 	// could think about using the PCL registration framework
+	/*
 	envire::icp::TrimmedKD icp;
 	icp.addToModel( envire::icp::PointcloudAdapter( pc1, conf.model_density ) );
 	icp.align( envire::icp::PointcloudAdapter( pc2, conf.measurement_density ),  
 		conf.max_iterations, conf.min_mse, conf.min_mse_diff, conf.overlap );
+	*/
 
 	// come up with a covariance here
 	// TODO replace with calculated covariance values 
@@ -272,12 +279,14 @@ public:
 
 	// add the egde to the optimization framework 
 	// this will update an existing edge
+	/*
 	optimizer->addEdge( 
 		optimizer->vertex( prevBodyFrame->getUniqueId() ),
 		optimizer->vertex( currentBodyFrame->getUniqueId() ),
 		eigen2Hogman( body2bodyPrev ),
 		envireCov2HogmanInf( cov )
 		);
+	*/
     }
 
     ~PoseGraph()
@@ -289,12 +298,12 @@ public:
 }
 
 Task::Task(std::string const& name, TaskCore::TaskState initial_state)
-    : TaskBase(name, initial_state), env(NULL)
+    : TaskBase(name, initial_state), env(NULL), firstNode(true)
 {
 }
 
 Task::Task(std::string const& name, RTT::ExecutionEngine* engine, TaskCore::TaskState initial_state)
-    : TaskBase(name, engine, initial_state), env(NULL)
+    : TaskBase(name, engine, initial_state), env(NULL), firstNode( true )
 {
 }
 
@@ -309,17 +318,31 @@ void Task::distance_framesTransformerCallback(const base::Time &ts, const ::base
     if( !_body2odometry.get( ts, body2odometry ) || !_lcamera2body.get( ts, lcamera2body ) )
 	return;
 
+    std::cerr << "add node" << std::endl;
+    std::cerr << body2odometry.translation().transpose() << std::endl;
+
     // get the transformwithuncertainty
     // TODO get the covariance from the transformer module
     TransformWithUncertainty body2odometryTU( 
 	    body2odometry, Eigen::Matrix<double,6,6>::Identity() );
 
-    std::cerr << "add node" << std::endl;
+    TransformWithUncertainty body2bodyPrev;
+    if( firstNode )
+	body2bodyPrev = TransformWithUncertainty( Eigen::Affine3d::Identity(), Eigen::Matrix<double,6,6>::Identity() );
+    else
+	body2bodyPrev = prevBody2Odometry.inverse() * body2odometryTU;
+
+    std::cerr << "body2bodyprev: " << std::endl;
+    std::cerr << body2bodyPrev.getTransform().translation().transpose() << std::endl;
+
     // initialize a new node, and add the sensor readings to it
-    graph->initNode( prevBody2Odometry.inverse() * body2odometryTU );
+    graph->initNode( body2bodyPrev );
     graph->addSensorReading( distance_frames_sample, lcamera2body );
     graph->addNode();
 
+    std::cerr << "add node done." << std::endl;
+
+    firstNode = false;
     prevBody2Odometry = body2odometryTU;
 }
 
