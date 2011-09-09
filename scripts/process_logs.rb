@@ -30,6 +30,7 @@ log_file = args[0]
 replay = Asguard::Replay.new( log_file )
 
 Orocos.initialize
+Orocos.load_typekit "stereo"
 Orocos::Process.spawn 'graph_slam_test', 'valgrind'=>false, "wait" => 1000 do |p|
     graph_slam = p.task('graph_slam')
 
@@ -37,10 +38,8 @@ Orocos::Process.spawn 'graph_slam_test', 'valgrind'=>false, "wait" => 1000 do |p
 
     replay.log.odometry.odometry_samples.connect_to( graph_slam.dynamic_transformations, :type => :buffer, :size => 1000 )
     replay.log.dynamixel.lowerDynamixel2UpperDynamixel.connect_to( graph_slam.dynamic_transformations, :type => :buffer, :size => 1000 )
-    if replay.log.has_task? :stereo and replay.log.stereo.has_port? :distance_frame
-        replay.log.stereo.distance_frame.connect_to( graph_slam.distance_frames, :type => :buffer, :size => 2 )
-        puts "INFO: Using distance images."
-    end
+    replay.log.stereo.distance_frame.connect_to( graph_slam.distance_frames, :type => :buffer, :size => 2 )
+    replay.log.stereo.stereo_features.connect_to( graph_slam.stereo_features, :type => :buffer, :size => 2 )
 
     tf = Asguard::Transform.new [:dynamixel]
     tf.setup_filters replay

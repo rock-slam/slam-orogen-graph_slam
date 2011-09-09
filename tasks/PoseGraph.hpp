@@ -3,6 +3,7 @@
 
 #include <envire/Core.hpp>
 #include <envire/maps/Pointcloud.hpp>
+#include <envire/maps/Featurecloud.hpp>
 #include <envire/maps/Grids.hpp>
 #include <envire/operators/DistanceGridToPointcloud.hpp>
 
@@ -80,6 +81,10 @@ class PoseGraph
     envire::DistanceGrid::Ptr distGrid;
     envire::DistanceGridToPointcloud::Ptr distOp;
 
+    // chain for feature clouds
+    envire::FrameNode::Ptr featureFrame;
+    envire::Featurecloud::Ptr featurecloud;
+
     // current node
     envire::FrameNode::Ptr prevBodyFrame;
     envire::FrameNode::Ptr currentBodyFrame;
@@ -99,6 +104,12 @@ public:
 	distOp = new envire::DistanceGridToPointcloud();
 	distOp->setMaxDistance( 5.0 );
 	env->attachItem( distOp.get() );
+
+	// set-up the chain for the feature clouds
+	featureFrame = new envire::FrameNode();
+	env->addChild( bodyFrame.get(), featureFrame.get() );
+	featurecloud = new envire::Featurecloud();
+	env->setFrameNode( featurecloud.get(), featureFrame.get() );
     }
 
     /** will prepare a new node based on an initial transformation
@@ -135,7 +146,7 @@ public:
 	}
     }
 
-    /** adds a sensor reading to an initialized node
+    /** adds a sensor reading for a distance image to an initialized node
      */
     void addSensorReading( const base::samples::DistanceImage& distImage, const Eigen::Affine3d& sensor2body )
     {
@@ -156,6 +167,7 @@ public:
 
 	envire::Pointcloud::Ptr distPc = new envire::Pointcloud();
 	env->setFrameNode( distPc.get(), currentBodyFrame.get() );
+	distPc->setLabel("dense");
 	distOp->removeOutputs();
 	distOp->addOutput( distPc.get() );
 
@@ -164,6 +176,23 @@ public:
 	envire::GraphViz gv;
 	gv.writeToFile( env, "/tmp/gv.dot" );
     }	
+
+    /** adds a sensor reading for a feature array to an initialized node
+     */
+    void addSensorReading( const stereo::StereoFeatureArray& featureArray, const Eigen::Affine3d& sensor2body )
+    {
+	// configure the processing chain for the feature image 
+	assert( currentBodyFrame );
+	featureFrame->setTransform( sensor2body );
+	featureArray.copyTo( *featurecloud.get() );
+
+	envire::Featurecloud::Ptr featurePc = new envire::Featurecloud();
+	env->setFrameNode( featurePc.get(), currentBodyFrame.get() );
+	featurePc->setLabel("sparse");
+
+	featurePc->copyFrom( featurecloud.get() );
+	featurePc->itemModified();
+    }
 
     /** adds an initialized node, with optional sensor readings to the node graph
      *
@@ -216,7 +245,8 @@ public:
 	    for( std::list<envire::CartesianMap*>::iterator it = la.begin();
 		    it != la.end(); it ++ )
 	    {
-		stereoMap = dynamic_cast<envire::Pointcloud*>( *it );
+		if( (*it)->getLabel() == "dense" )
+		    stereoMap = dynamic_cast<envire::Pointcloud*>( *it );
 	    }
 	}
 

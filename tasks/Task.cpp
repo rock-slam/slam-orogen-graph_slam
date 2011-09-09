@@ -8,17 +8,23 @@
 using namespace graph_slam;
 
 Task::Task(std::string const& name, TaskCore::TaskState initial_state)
-    : TaskBase(name, initial_state), env(NULL), firstNode(true)
+    : TaskBase(name, initial_state), env(NULL), firstNode(true), lastFeatureArrayValid( false )
 {
 }
 
 Task::Task(std::string const& name, RTT::ExecutionEngine* engine, TaskCore::TaskState initial_state)
-    : TaskBase(name, engine, initial_state), env(NULL), firstNode( true )
+    : TaskBase(name, engine, initial_state), env(NULL), firstNode( true ), lastFeatureArrayValid( false )
 {
 }
 
 Task::~Task()
 {
+}
+
+void Task::stereo_featuresTransformerCallback(const base::Time &ts, const ::stereo::StereoFeatureArray &feature_arrays_sample)
+{
+    lastFeatureArray = feature_arrays_sample;
+    lastFeatureArrayValid = true;
 }
 
 void Task::distance_framesTransformerCallback(const base::Time &ts, const ::base::samples::DistanceImage &distance_frames_sample)
@@ -45,6 +51,12 @@ void Task::distance_framesTransformerCallback(const base::Time &ts, const ::base
     // initialize a new node, and add the sensor readings to it
     graph->initNode( body2bodyPrev );
     graph->addSensorReading( distance_frames_sample, lcamera2body );
+    if( lastFeatureArrayValid )
+    {
+	graph->addSensorReading( lastFeatureArray, lcamera2body );
+	lastFeatureArrayValid = false;
+    }
+
     graph->addNode();
 
     std::cerr << "add node done." << std::endl;

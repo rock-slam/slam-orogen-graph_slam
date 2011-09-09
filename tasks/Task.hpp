@@ -27,6 +27,7 @@ namespace graph_slam {
     protected:
 
         virtual void distance_framesTransformerCallback(const base::Time &ts, const ::base::samples::DistanceImage &distance_frames_sample);
+        virtual void stereo_featuresTransformerCallback(const base::Time &ts, const ::stereo::StereoFeatureArray &feature_arrays_sample);
 
 	QtThreadedWidget<vizkit::EnvireWidget> viz;
 
@@ -34,6 +35,9 @@ namespace graph_slam {
 	envire::TransformWithUncertainty prevBody2Odometry;
 	bool firstNode;
 	PoseGraph *graph;
+
+	bool lastFeatureArrayValid;
+	stereo::StereoFeatureArray lastFeatureArray;
 
     public:
         Task(std::string const& name = "graph_slam::Task", TaskCore::TaskState initial_state = Stopped);

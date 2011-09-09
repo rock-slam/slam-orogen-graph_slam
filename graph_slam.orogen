@@ -22,6 +22,10 @@ task_context "Task" do
 	needs_reliable_connection.
 	doc 'distance images'
 
+    input_port('stereo_features', '/stereo/StereoFeatureArray').
+	needs_reliable_connection.
+	doc 'sparse feature array'
+
     transformer do
 	max_latency( 0.2 )
 
@@ -29,6 +33,7 @@ task_context "Task" do
 	transformation("lcamera", "body")
 	transformation("body", "odometry")
 
+	align_port("stereo_features", 0.1)
 	align_port("distance_frames", 0.1)
     end
 
