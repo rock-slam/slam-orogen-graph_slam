@@ -11,6 +11,9 @@
 #include <envire/icp.hpp>
 #include <envire/icpConfigurationTypes.hpp>
 
+#include "opencv2/core/core.hpp"
+#include "opencv2/features2d/features2d.hpp"
+
 namespace graph_slam
 {
 
@@ -247,10 +250,13 @@ public:
 	    {
 		if( (*it)->getLabel() == "dense" )
 		    stereoMap = dynamic_cast<envire::Pointcloud*>( *it );
+		else if( (*it)->getLabel() == "sparse" )
+		    sparseMap = dynamic_cast<envire::Featurecloud*>( *it );
 	    }
 	}
 
 	envire::Pointcloud *stereoMap;
+	envire::Featurecloud *sparseMap;
 	// add more maps that can be associated here
     };
 
@@ -262,7 +268,12 @@ public:
 
 	// call the individual association methods
 	if( sma.stereoMap && smb.stereoMap )
-	    associateStereoMap( sma.stereoMap, smb.stereoMap );
+	//    associateStereoMap( sma.stereoMap, smb.stereoMap );
+	;
+
+	if( sma.sparseMap && smb.sparseMap )
+	    associateSparseMap( sma.sparseMap, smb.sparseMap );
+	
     }
 
     void associateStereoMap( envire::Pointcloud* pc1, envire::Pointcloud* pc2 ) 
@@ -296,15 +307,63 @@ public:
 	Eigen::Matrix<double,6,6> cov = 
 	    cov_diag.array().square().matrix().asDiagonal();
 
-	Eigen::Affine3d body2bodyPrev = 
+	Eigen::Affine3d bodyAtoBodyB = 
 	    pc2->getFrameNode()->relativeTransform( pc1->getFrameNode() );
 
 	// add the egde to the optimization framework 
 	// this will update an existing edge
 	optimizer->addEdge( 
-		optimizer->vertex( prevBodyFrame->getUniqueId() ),
-		optimizer->vertex( currentBodyFrame->getUniqueId() ),
-		eigen2Hogman( body2bodyPrev ),
+		optimizer->vertex( pc1->getFrameNode()->getUniqueId() ),
+		optimizer->vertex( pc2->getFrameNode()->getUniqueId() ),
+		eigen2Hogman( bodyAtoBodyB ),
+		envireCov2HogmanInf( cov )
+		);
+    }
+
+    void associateSparseMap( envire::Featurecloud *fc1, envire::Featurecloud *fc2 )
+    {
+	// get features from array
+	cv::Mat feat1 = cv::Mat( fc1->size(), fc1->descriptorSize, cv::DataType<float>::type, &fc1->descriptors[0]); 
+	cv::Mat feat2 = cv::Mat( fc2->size(), fc2->descriptorSize, cv::DataType<float>::type, &fc2->descriptors[0]); 
+
+	// match the features
+	const int knn = 1;
+	std::vector<std::vector<cv::DMatch> > matches; 
+	cv::FlannBasedMatcher matcher;
+	matcher.knnMatch( feat1, feat2, matches, knn );
+
+	// find the transformation
+	envire::icp::Pairs pairs;
+	for( size_t i=0; i<matches.size(); i++ )
+	{
+	    const cv::DMatch &match( matches[i].front() );
+	    pairs.add( 
+		    fc1->vertices[match.trainIdx], 
+		    fc2->vertices[match.queryIdx], 
+		    match.distance );
+	}
+	pairs.trim( pairs.size() * 0.3 );
+
+	Eigen::Affine3d bodyAtoBodyB = pairs.getTransform();
+	
+	// come up with a covariance here
+	// TODO replace with calculated covariance values 
+	const double trans_error = 0.1;
+	const double rot_error = 10.0/180.0*M_PI;
+	
+	Eigen::Matrix<double,6,1> cov_diag;
+	cov_diag << Eigen::Vector3d::Ones() * rot_error, 
+		 Eigen::Vector3d::Ones() * trans_error;
+
+	Eigen::Matrix<double,6,6> cov = 
+	    cov_diag.array().square().matrix().asDiagonal();
+
+	// add the egde to the optimization framework 
+	// this will update an existing edge
+	optimizer->addEdge( 
+		optimizer->vertex( fc1->getFrameNode()->getUniqueId() ),
+		optimizer->vertex( fc2->getFrameNode()->getUniqueId() ),
+		eigen2Hogman( bodyAtoBodyB ),
 		envireCov2HogmanInf( cov )
 		);
     }
