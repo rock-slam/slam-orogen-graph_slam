@@ -14,6 +14,8 @@
 #include "opencv2/core/core.hpp"
 #include "opencv2/features2d/features2d.hpp"
 
+#include <stereo/sparse_stereo.hpp>
+
 namespace graph_slam
 {
 
@@ -307,7 +309,7 @@ public:
 	Eigen::Matrix<double,6,6> cov = 
 	    cov_diag.array().square().matrix().asDiagonal();
 
-	Eigen::Affine3d bodyAtoBodyB = 
+	Eigen::Affine3d bodyBtoBodyA = 
 	    pc2->getFrameNode()->relativeTransform( pc1->getFrameNode() );
 
 	// add the egde to the optimization framework 
@@ -315,7 +317,7 @@ public:
 	optimizer->addEdge( 
 		optimizer->vertex( pc1->getFrameNode()->getUniqueId() ),
 		optimizer->vertex( pc2->getFrameNode()->getUniqueId() ),
-		eigen2Hogman( bodyAtoBodyB ),
+		eigen2Hogman( bodyBtoBodyA ),
 		envireCov2HogmanInf( cov )
 		);
     }
@@ -328,23 +330,30 @@ public:
 
 	// match the features
 	const int knn = 1;
-	std::vector<std::vector<cv::DMatch> > matches; 
-	cv::FlannBasedMatcher matcher;
-	matcher.knnMatch( feat1, feat2, matches, knn );
+	const float distanceFactor = 2.0;
+	std::vector<cv::DMatch> matches; 
+	stereo::StereoFeatures f;
+	f.crossCheckMatching( feat1, feat2, matches, knn, distanceFactor );
+
+	std::cout << "found " << matches.size() << " matches " << std::endl;
+
+	const size_t minMatches = 7;
+	if( matches.size() < minMatches )
+	    return;
 
 	// find the transformation
 	envire::icp::Pairs pairs;
 	for( size_t i=0; i<matches.size(); i++ )
 	{
-	    const cv::DMatch &match( matches[i].front() );
+	    const cv::DMatch &match( matches[i] );
 	    pairs.add( 
 		    fc1->vertices[match.trainIdx], 
 		    fc2->vertices[match.queryIdx], 
 		    match.distance );
 	}
-	pairs.trim( pairs.size() * 0.3 );
+	//pairs.trim( pairs.size() * 0.3 );
 
-	Eigen::Affine3d bodyAtoBodyB = pairs.getTransform();
+	Eigen::Affine3d bodyBtoBodyA = pairs.getTransform();
 	
 	// come up with a covariance here
 	// TODO replace with calculated covariance values 
@@ -363,7 +372,7 @@ public:
 	optimizer->addEdge( 
 		optimizer->vertex( fc1->getFrameNode()->getUniqueId() ),
 		optimizer->vertex( fc2->getFrameNode()->getUniqueId() ),
-		eigen2Hogman( bodyAtoBodyB ),
+		eigen2Hogman( bodyBtoBodyA ),
 		envireCov2HogmanInf( cov )
 		);
     }
