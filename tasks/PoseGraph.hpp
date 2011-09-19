@@ -324,16 +324,9 @@ public:
 
     void associateSparseMap( envire::Featurecloud *fc1, envire::Featurecloud *fc2 )
     {
-	// get features from array
-	cv::Mat feat1 = cv::Mat( fc1->size(), fc1->descriptorSize, cv::DataType<float>::type, &fc1->descriptors[0]); 
-	cv::Mat feat2 = cv::Mat( fc2->size(), fc2->descriptorSize, cv::DataType<float>::type, &fc2->descriptors[0]); 
-
-	// match the features
-	const int knn = 1;
-	const float distanceFactor = 2.0;
-	std::vector<cv::DMatch> matches; 
 	stereo::StereoFeatures f;
-	f.crossCheckMatching( feat1, feat2, matches, knn, distanceFactor );
+	f.calculateInterFrameCorrespondences( fc1, fc2, stereo::FILTER_FUNDAMENTAL );
+	std::vector<std::pair<long, long> > matches = f.getInterFrameCorrespondences();
 
 	std::cout << "found " << matches.size() << " matches " << std::endl;
 
@@ -345,13 +338,12 @@ public:
 	envire::icp::Pairs pairs;
 	for( size_t i=0; i<matches.size(); i++ )
 	{
-	    const cv::DMatch &match( matches[i] );
-	    pairs.add( 
-		    fc1->vertices[match.trainIdx], 
-		    fc2->vertices[match.queryIdx], 
-		    match.distance );
+	    const std::pair<int, int> &match( matches[i] );
+	    const Eigen::Vector3d v1 = fc1->vertices[match.first];
+	    const Eigen::Vector3d v2 = fc2->vertices[match.second];
+	    pairs.add( v1, v2, (v1-v2).norm() );
 	}
-	//pairs.trim( pairs.size() * 0.3 );
+	//pairs.trim( pairs.size() * 0.5 );
 
 	Eigen::Affine3d bodyBtoBodyA = pairs.getTransform();
 	
