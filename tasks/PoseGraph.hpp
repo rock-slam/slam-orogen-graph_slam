@@ -8,7 +8,7 @@
 #include <envire/operators/DistanceGridToPointcloud.hpp>
 
 #include <aislib/graph_optimizer/graph_optimizer3d_hchol.h>
-#include <envire/icp.hpp>
+#include <envire/ransac.hpp>
 #include <envire/icpConfigurationTypes.hpp>
 
 #include "opencv2/core/core.hpp"
@@ -270,8 +270,8 @@ public:
 
 	// call the individual association methods
 	if( sma.stereoMap && smb.stereoMap )
-	//    associateStereoMap( sma.stereoMap, smb.stereoMap );
-	;
+	    associateStereoMap( sma.stereoMap, smb.stereoMap );
+	
 
 	if( sma.sparseMap && smb.sparseMap )
 	    associateSparseMap( sma.sparseMap, smb.sparseMap );
@@ -328,45 +328,58 @@ public:
 	f.calculateInterFrameCorrespondences( fc1, fc2, stereo::FILTER_FUNDAMENTAL );
 	std::vector<std::pair<long, long> > matches = f.getInterFrameCorrespondences();
 
-	std::cout << "found " << matches.size() << " matches " << std::endl;
-
 	const size_t minMatches = 7;
 	if( matches.size() < minMatches )
 	    return;
 
-	// find the transformation
-	envire::icp::Pairs pairs;
-	for( size_t i=0; i<matches.size(); i++ )
+	// find the transformation using ransac
+	Eigen::Affine3d best_model;
+	std::vector<size_t> best_inliers;
+	const double DIST_THRESHOLD = 0.2;
+	std::vector<Eigen::Vector3d> x, p;
+	for( size_t i = 0; i < matches.size(); i++ )
 	{
-	    const std::pair<int, int> &match( matches[i] );
-	    const Eigen::Vector3d v1 = fc1->vertices[match.first];
-	    const Eigen::Vector3d v2 = fc2->vertices[match.second];
-	    pairs.add( v1, v2, (v1-v2).norm() );
+	    Eigen::Vector3d &v1( fc1->vertices[matches[i].first]  );
+	    Eigen::Vector3d &v2( fc2->vertices[matches[i].second]  );
+	    const double max_dist = 15.0;
+	    if( v1.norm() < max_dist && v2.norm() < max_dist )
+	    {
+		x.push_back( v1 );
+		p.push_back( v2 );
+	    }
 	}
-	//pairs.trim( pairs.size() * 0.5 );
-
-	Eigen::Affine3d bodyBtoBodyA = pairs.getTransform();
+	std::cout << x.size() << std::endl;
 	
-	// come up with a covariance here
-	// TODO replace with calculated covariance values 
-	const double trans_error = 0.1;
-	const double rot_error = 10.0/180.0*M_PI;
-	
-	Eigen::Matrix<double,6,1> cov_diag;
-	cov_diag << Eigen::Vector3d::Ones() * rot_error, 
-		 Eigen::Vector3d::Ones() * trans_error;
+	envire::ransac::FitTransform fit( x, p );
+	envire::ransac::ransacSingleModel( fit, 3, DIST_THRESHOLD, best_model, best_inliers, 10000 );
 
-	Eigen::Matrix<double,6,6> cov = 
-	    cov_diag.array().square().matrix().asDiagonal();
+	std::cout << "matches: " << matches.size() << " ransac: " << best_inliers.size() << std::endl; 
 
-	// add the egde to the optimization framework 
-	// this will update an existing edge
-	optimizer->addEdge( 
-		optimizer->vertex( fc1->getFrameNode()->getUniqueId() ),
-		optimizer->vertex( fc2->getFrameNode()->getUniqueId() ),
-		eigen2Hogman( bodyBtoBodyA ),
-		envireCov2HogmanInf( cov )
-		);
+	if( best_inliers.size() > 0 )
+	{
+	    Eigen::Affine3d bodyBtoBodyA = best_model;
+
+	    // come up with a covariance here
+	    // TODO replace with calculated covariance values 
+	    const double trans_error = 0.1;
+	    const double rot_error = 10.0/180.0*M_PI;
+
+	    Eigen::Matrix<double,6,1> cov_diag;
+	    cov_diag << Eigen::Vector3d::Ones() * rot_error, 
+		     Eigen::Vector3d::Ones() * trans_error;
+
+	    Eigen::Matrix<double,6,6> cov = 
+		cov_diag.array().square().matrix().asDiagonal();
+
+	    // add the egde to the optimization framework 
+	    // this will update an existing edge
+	    optimizer->addEdge( 
+		    optimizer->vertex( fc1->getFrameNode()->getUniqueId() ),
+		    optimizer->vertex( fc2->getFrameNode()->getUniqueId() ),
+		    eigen2Hogman( bodyBtoBodyA ),
+		    envireCov2HogmanInf( cov )
+		    );
+	}
     }
 
     ~PoseGraph()
