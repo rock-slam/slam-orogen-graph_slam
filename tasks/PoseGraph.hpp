@@ -325,39 +325,12 @@ public:
     void associateSparseMap( envire::Featurecloud *fc1, envire::Featurecloud *fc2 )
     {
 	stereo::StereoFeatures f;
-	f.calculateInterFrameCorrespondences( fc1, fc2, stereo::FILTER_FUNDAMENTAL );
+	f.calculateInterFrameCorrespondences( fc1, fc2, stereo::FILTER_ISOMETRY );
 	std::vector<std::pair<long, long> > matches = f.getInterFrameCorrespondences();
 
-	const size_t minMatches = 7;
-	if( matches.size() < minMatches )
-	    return;
-
-	// find the transformation using ransac
-	Eigen::Affine3d best_model;
-	std::vector<size_t> best_inliers;
-	const double DIST_THRESHOLD = 0.2;
-	std::vector<Eigen::Vector3d> x, p;
-	for( size_t i = 0; i < matches.size(); i++ )
+	if( f.getInterFrameCorrespondences().size() > 0 )
 	{
-	    Eigen::Vector3d &v1( fc1->vertices[matches[i].first]  );
-	    Eigen::Vector3d &v2( fc2->vertices[matches[i].second]  );
-	    const double max_dist = 15.0;
-	    if( v1.norm() < max_dist && v2.norm() < max_dist )
-	    {
-		x.push_back( v1 );
-		p.push_back( v2 );
-	    }
-	}
-	std::cout << x.size() << std::endl;
-	
-	envire::ransac::FitTransform fit( x, p );
-	envire::ransac::ransacSingleModel( fit, 3, DIST_THRESHOLD, best_model, best_inliers, 10000 );
-
-	std::cout << "matches: " << matches.size() << " ransac: " << best_inliers.size() << std::endl; 
-
-	if( best_inliers.size() > 0 )
-	{
-	    Eigen::Affine3d bodyBtoBodyA = best_model;
+	    Eigen::Affine3d bodyBtoBodyA = f.getInterFrameCorrespondenceTransform();
 
 	    // come up with a covariance here
 	    // TODO replace with calculated covariance values 
