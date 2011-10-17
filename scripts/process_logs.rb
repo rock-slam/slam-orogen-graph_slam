@@ -31,7 +31,7 @@ replay = Asguard::Replay.new( log_file )
 
 Orocos.initialize
 Orocos.load_typekit "stereo"
-Orocos::Process.spawn 'graph_slam_test', 'valgrind'=>false, "wait" => 1000 do |p|
+Orocos::Process.run 'graph_slam_test', 'valgrind'=>false, "wait" => 1000 do |p|
     graph_slam = p.task('graph_slam')
 
     graph_slam.environment_debug_path = out_file
