@@ -65,8 +65,8 @@ Eigen::Affine3d hogman2Eigen( const Transformation3& hogman_transform )
 Matrix6 envireCov2HogmanInf( const Eigen::Matrix<double,6,6>& eigen_matrix )
 {
     Eigen::Matrix<double,6,6> t;
-    t << eigen_matrix.bottomRightCorner<3,3>(), eigen_matrix.topRightCorner<3,3>(),
-      eigen_matrix.bottomLeftCorner<3,3>(), eigen_matrix.topLeftCorner<3,3>();
+    t << eigen_matrix.bottomRightCorner<3,3>(), eigen_matrix.bottomLeftCorner<3,3>(),
+      eigen_matrix.topRightCorner<3,3>(), eigen_matrix.topLeftCorner<3,3>();
 
     return eigen2Hogman( Eigen::Matrix<double,6,6>(t.inverse()) );
 }
