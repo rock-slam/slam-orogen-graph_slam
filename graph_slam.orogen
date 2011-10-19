@@ -26,13 +26,17 @@ task_context "Task" do
 	needs_reliable_connection.
 	doc 'sparse feature array'
 
+    input_port('odometry_delta_samples', '/base/samples/RigidBodyState').
+	needs_reliable_connection.
+	doc 'delta odometry samples'
+
     transformer do
 	max_latency( 0.2 )
 
 	transformation("laser", "body")	
 	transformation("lcamera", "body")
-	transformation("body", "odometry")
 
+	align_port("odometry_delta_samples", 0.1)
 	align_port("stereo_features", 0.1)
 	align_port("distance_frames", 0.1)
     end

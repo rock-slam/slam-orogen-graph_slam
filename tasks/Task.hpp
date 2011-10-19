@@ -26,13 +26,14 @@ namespace graph_slam {
 	friend class TaskBase;
     protected:
 
+        virtual void odometry_delta_samplesTransformerCallback(const base::Time &ts, const ::base::samples::RigidBodyState &odometry_delta_samples_sample);
         virtual void distance_framesTransformerCallback(const base::Time &ts, const ::base::samples::DistanceImage &distance_frames_sample);
         virtual void stereo_featuresTransformerCallback(const base::Time &ts, const ::stereo::StereoFeatureArray &feature_arrays_sample);
 
 	QtThreadedWidget<vizkit::EnvireWidget> viz;
 
 	envire::Environment *env;
-	envire::TransformWithUncertainty prevBody2Odometry;
+	envire::TransformWithUncertainty body2PrevBody;
 	bool firstNode;
 	PoseGraph *graph;
 

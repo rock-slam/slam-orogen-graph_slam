@@ -2,23 +2,31 @@
 #include <vizkit/EnvireVisualization.hpp>
 
 #include <envire/tools/GraphViz.hpp>
+#include <Eigen/Dense>
 
 #include "PoseGraph.hpp"
 
 using namespace graph_slam;
 
 Task::Task(std::string const& name, TaskCore::TaskState initial_state)
-    : TaskBase(name, initial_state), env(NULL), firstNode(true), lastFeatureArrayValid( false )
+    : TaskBase(name, initial_state), env(NULL), lastFeatureArrayValid( false )
 {
 }
 
 Task::Task(std::string const& name, RTT::ExecutionEngine* engine, TaskCore::TaskState initial_state)
-    : TaskBase(name, engine, initial_state), env(NULL), firstNode( true ), lastFeatureArrayValid( false )
+    : TaskBase(name, engine, initial_state), env(NULL), lastFeatureArrayValid( false )
 {
 }
 
 Task::~Task()
 {
+}
+
+void Task::odometry_delta_samplesTransformerCallback(const base::Time &ts, const ::base::samples::RigidBodyState &odometry_delta_samples_sample)
+{
+    // integrate the delta changes into the body2PrevBody
+    envire::TransformWithUncertainty deltaBody2PrevBody( odometry_delta_samples_sample );
+    body2PrevBody = deltaBody2PrevBody * body2PrevBody;
 }
 
 void Task::stereo_featuresTransformerCallback(const base::Time &ts, const ::stereo::StereoFeatureArray &feature_arrays_sample)
@@ -30,26 +38,24 @@ void Task::stereo_featuresTransformerCallback(const base::Time &ts, const ::ster
 void Task::distance_framesTransformerCallback(const base::Time &ts, const ::base::samples::DistanceImage &distance_frames_sample)
 {
     // get the current transforms
-    Eigen::Affine3d body2odometry, lcamera2body;
-    if( !_body2odometry.get( ts, body2odometry ) || !_lcamera2body.get( ts, lcamera2body ) )
+    Eigen::Affine3d lcamera2body;
+    if( !_lcamera2body.get( ts, lcamera2body ) )
 	return;
 
-    std::cerr << "add node" << std::endl;
-    std::cerr << body2odometry.translation().transpose() << std::endl;
+    std::cerr << "### add node" << std::endl;
 
-    // get the transformwithuncertainty
-    // TODO get the covariance from the transformer module
-    envire::TransformWithUncertainty body2odometryTU( 
-	    body2odometry, Eigen::Matrix<double,6,6>::Identity() );
+    const double error_offset = 0.01;
+    body2PrevBody.setCovariance( body2PrevBody.getCovariance() +
+	    Eigen::Matrix<double,6,6>::Identity() * error_offset );
 
-    envire::TransformWithUncertainty body2bodyPrev;
-    if( firstNode )
-	body2bodyPrev = envire::TransformWithUncertainty( Eigen::Affine3d::Identity(), Eigen::Matrix<double,6,6>::Identity() );
-    else
-	body2bodyPrev = prevBody2Odometry.inverse() * body2odometryTU;
+    Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double,6,6> > eigensolver( body2PrevBody.getCovariance() );
+    std::cout << body2PrevBody.getCovariance() << std::endl;
+    std::cout << "tests : " << std::endl
+	    << "hermetian : " << body2PrevBody.getCovariance().isApprox( body2PrevBody.getCovariance().transpose() ) << std::endl
+	    << "eigenvalues : " << eigensolver.eigenvalues().transpose() << std::endl;
 
     // initialize a new node, and add the sensor readings to it
-    graph->initNode( body2bodyPrev );
+    graph->initNode( body2PrevBody );
     graph->addSensorReading( distance_frames_sample, lcamera2body );
     if( lastFeatureArrayValid )
     {
@@ -61,8 +67,8 @@ void Task::distance_framesTransformerCallback(const base::Time &ts, const ::base
 
     std::cerr << "add node done." << std::endl;
 
-    firstNode = false;
-    prevBody2Odometry = body2odometryTU;
+    // reset body2PrevBody
+    body2PrevBody = envire::TransformWithUncertainty::Identity();
 }
 
 /// The following lines are template definitions for the various state machine
@@ -82,6 +88,8 @@ bool Task::configureHook()
     }
 
     graph = new PoseGraph( env );
+
+    body2PrevBody = envire::TransformWithUncertainty::Identity();
 
     return true;
 }

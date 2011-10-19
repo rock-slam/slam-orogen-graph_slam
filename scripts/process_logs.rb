@@ -36,7 +36,7 @@ Orocos::Process.run 'graph_slam_test', 'valgrind'=>false, "wait" => 1000 do |p|
 
     graph_slam.environment_debug_path = out_file
 
-    replay.log.odometry.odometry_samples.connect_to( graph_slam.dynamic_transformations, :type => :buffer, :size => 1000 )
+    replay.log.odometry.odometry_delta_samples.connect_to( graph_slam.odometry_delta_samples, :type => :buffer, :size => 1000 )
     replay.log.dynamixel.lowerDynamixel2UpperDynamixel.connect_to( graph_slam.dynamic_transformations, :type => :buffer, :size => 1000 )
     replay.log.stereo.distance_frame.connect_to( graph_slam.distance_frames, :type => :buffer, :size => 2 )
     replay.log.stereo.stereo_features.connect_to( graph_slam.stereo_features, :type => :buffer, :size => 2 )

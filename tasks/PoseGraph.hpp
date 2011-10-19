@@ -243,7 +243,7 @@ public:
     struct SensorMaps
     {
 	explicit SensorMaps( envire::FrameNode* a )
-	    : stereoMap(NULL)
+	    : stereoMap(NULL), sparseMap(NULL)
 	{
 	    // go through all the maps in the framenode and see if they fit a sensor map 
 	    std::list<envire::CartesianMap*> la = a->getMaps();
