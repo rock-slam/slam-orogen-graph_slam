@@ -2,7 +2,7 @@ name "graph_slam"
 
 using_library 'hogman'
 using_library 'envire'
-using_library 'pcl_registration-1.2'
+using_library 'vizkit'
 
 import_types_from 'base'
 import_types_from 'stereo'

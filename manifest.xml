@@ -7,4 +7,5 @@
     <depend package="slam/envire"/>
     <depend package="drivers/transformer"/>
     <depend package="image_processing/orogen/stereo"/>
+    <depend package="gui/vizkit"/>
 </package>
