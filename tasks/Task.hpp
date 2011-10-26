@@ -41,8 +41,8 @@ namespace graph_slam {
 	stereo::StereoFeatureArray lastFeatureArray;
 
     public:
-        Task(std::string const& name = "graph_slam::Task", TaskCore::TaskState initial_state = Stopped);
-        Task(std::string const& name, RTT::ExecutionEngine* engine, TaskCore::TaskState initial_state = Stopped);
+        Task(std::string const& name = "graph_slam::Task");
+        Task(std::string const& name, RTT::ExecutionEngine* engine);
 
 	~Task();
 

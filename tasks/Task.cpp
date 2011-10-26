@@ -8,13 +8,13 @@
 
 using namespace graph_slam;
 
-Task::Task(std::string const& name, TaskCore::TaskState initial_state)
-    : TaskBase(name, initial_state), env(NULL), lastFeatureArrayValid( false )
+Task::Task(std::string const& name)
+    : TaskBase(name), env(NULL), lastFeatureArrayValid( false )
 {
 }
 
-Task::Task(std::string const& name, RTT::ExecutionEngine* engine, TaskCore::TaskState initial_state)
-    : TaskBase(name, engine, initial_state), env(NULL), lastFeatureArrayValid( false )
+Task::Task(std::string const& name, RTT::ExecutionEngine* engine)
+    : TaskBase(name, engine), env(NULL), lastFeatureArrayValid( false )
 {
 }
 
