@@ -444,7 +444,7 @@ public:
 	// call the individual association methods
 	if( sma->sparseMap && smb->sparseMap )
 	{
-	    if( associateSparseMap( sma->sparseMap, smb->sparseMap ) > min_correspondences )
+	    if( associateSparseMap( sma->sparseMap, smb->sparseMap, min_correspondences ) >= min_correspondences )
 	    {
 		if( sma->stereoMap && smb->stereoMap )
 		    associateStereoMap( sma->stereoMap, smb->stereoMap );
@@ -515,13 +515,13 @@ public:
      * @return the number of matching interframe features. This can be used as a measure of quality
      * for the match.
      */
-    int associateSparseMap( envire::Featurecloud *fc1, envire::Featurecloud *fc2 )
+    int associateSparseMap( envire::Featurecloud *fc1, envire::Featurecloud *fc2, size_t min_correspondences = 3 )
     {
 	stereo::StereoFeatures f;
 	f.calculateInterFrameCorrespondences( fc1, fc2, stereo::FILTER_ISOMETRY );
 	std::vector<std::pair<long, long> > matches = f.getInterFrameCorrespondences();
 
-	if( f.getInterFrameCorrespondences().size() > 0 )
+	if( f.getInterFrameCorrespondences().size() >= min_correspondences )
 	{
 	    Eigen::Affine3d bodyBtoBodyA = f.getInterFrameCorrespondenceTransform();
 
