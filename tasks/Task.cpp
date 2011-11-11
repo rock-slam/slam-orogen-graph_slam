@@ -44,6 +44,7 @@ void Task::distance_framesTransformerCallback(const base::Time &ts, const ::base
 
     std::cerr << "### add node" << std::endl;
 
+    /*
     const double error_offset = 0.01;
     body2PrevBody.setCovariance( body2PrevBody.getCovariance() +
 	    Eigen::Matrix<double,6,6>::Identity() * error_offset );
@@ -53,6 +54,7 @@ void Task::distance_framesTransformerCallback(const base::Time &ts, const ::base
     std::cout << "tests : " << std::endl
 	    << "hermetian : " << body2PrevBody.getCovariance().isApprox( body2PrevBody.getCovariance().transpose() ) << std::endl
 	    << "eigenvalues : " << eigensolver.eigenvalues().transpose() << std::endl;
+    */
 
     // initialize a new node, and add the sensor readings to it
     graph->initNode( body2PrevBody );

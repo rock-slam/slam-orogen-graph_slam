@@ -42,6 +42,17 @@ Matrix6 eigen2Hogman( const Eigen::Matrix<double,6,6>& eigen_matrix )
     return result;
 }
 
+Eigen::Matrix<double,6,6> hogman2Eigen( const Matrix6& hogman )
+{
+    Eigen::Matrix<double,6,6> result;
+
+    for( int m=0; m<6; m++ )
+	for( int n=0; n<6; n++ )
+	    result(m,n) = hogman[m][n];
+
+    return result;
+}
+
 Eigen::Affine3d hogman2Eigen( const Transformation3& hogman_transform )
 {
     Eigen::Quaterniond rotation( 
@@ -71,12 +82,28 @@ Matrix6 envireCov2HogmanInf( const Eigen::Matrix<double,6,6>& eigen_matrix )
     return eigen2Hogman( Eigen::Matrix<double,6,6>(t.inverse()) );
 }
 
+/** 
+ * Transform a 6x6 covariance matrix in [t r] order from hogman Covariance
+ * format to the envire [r t] order.
+ */
+Eigen::Matrix<double,6,6> hogmanCov2EnvireCov( const Matrix6& hogman_matrix )
+{
+    Eigen::Matrix<double,6,6> t = hogman2Eigen( hogman_matrix );
+    Eigen::Matrix<double,6,6> t1;
+    t1 << t.bottomRightCorner<3,3>(), t.bottomLeftCorner<3,3>(),
+      t.topRightCorner<3,3>(), t.topLeftCorner<3,3>();
+    return t1;
+}
 
 class PoseGraph
 {
+public:
+    class SensorMaps;
+
+protected:
     envire::Environment *env;
     AISNavigation::GraphOptimizer3D *optimizer;
-    std::map<envire::FrameNode*, AISNavigation::PoseGraph3D::Vertex*> nodeMap;
+    std::map<long, SensorMaps*> nodeMap;
 
     // body frame of the robot
     envire::FrameNode::Ptr bodyFrame;
@@ -115,6 +142,16 @@ public:
 	env->addChild( bodyFrame.get(), featureFrame.get() );
 	featurecloud = new envire::Featurecloud();
 	env->setFrameNode( featurecloud.get(), featureFrame.get() );
+    }
+
+    ~PoseGraph()
+    {
+	// do some cleanup
+	delete optimizer;
+
+	// delete the nodeMap objects
+	for( std::map<long, SensorMaps*>::iterator it = nodeMap.begin(); it != nodeMap.end(); it++ )
+	    delete it->second;
     }
 
     /** will prepare a new node based on an initial transformation
@@ -178,8 +215,10 @@ public:
 
 	distOp->updateAll();
 
+	/*
 	envire::GraphViz gv;
 	gv.writeToFile( env, "/tmp/gv.dot" );
+	*/
     }	
 
     /** adds a sensor reading for a feature array to an initialized node
@@ -210,11 +249,23 @@ public:
 
 	// find relevant associations based on the current state of the graph
 	// for now, we just associate with the previous node. 
-	// TODO perform association with other nodes, to actually form graphs!
-	
-	if( prevBodyFrame )
+	//if( prevBodyFrame )
+	//{
+	//    associateNodes( prevBodyFrame.get(), currentBodyFrame.get() );
+	//}
+
+	// perform association with other nodes, to actually form graphs!
+	for( AISNavigation::Graph::VertexIDMap::iterator it = optimizer->vertices().begin(); 
+		it != optimizer->vertices().end(); it++ )
 	{
-	    associateNodes( prevBodyFrame.get(), currentBodyFrame.get() );
+	    // don't associate with self
+	    if( currentBodyFrame->getUniqueId() != it->first )
+	    {
+		envire::FrameNode::Ptr fn = env->getItem<envire::FrameNode>( it->first ).get();
+		std::cout << "associate node " << fn->getUniqueId() << " with " << currentBodyFrame->getUniqueId() << "... ";
+		bool result = associateNodes( fn.get(), currentBodyFrame.get() ); 
+		std::cout << (result ? "match" : "no match") << std::endl;
+	    }
 	}
 
 	// perform the graph optimization
@@ -229,8 +280,19 @@ public:
 	    const int id = it->first;
 	    const AISNavigation::PoseGraph3D::Vertex* vertex = static_cast<AISNavigation::PoseGraph3D::Vertex*>(it->second);
 
+	    // get pose with uncertainty from Hogman
+	    envire::TransformWithUncertainty tu( 
+		    hogman2Eigen( vertex->transformation ), 
+		    hogmanCov2EnvireCov( vertex->covariance ) );
+
+	    // and set it in envire for the frameNode with the corresponding id
 	    envire::FrameNode::Ptr fn = env->getItem<envire::FrameNode>( id ).get();
-	    fn->setTransform( hogman2Eigen( vertex->transformation ) );
+	    fn->setTransform( tu );
+
+	    // update the bounds 
+	    // TODO this could be optimized, as it may be to expensive to 
+	    // update the bounds everytime we have a small change in position
+	    getSensorMaps( fn.get() )->updateBounds();
 	}
 
 	// TODO see if we need to reassociate here 
@@ -240,10 +302,38 @@ public:
 	currentBodyFrame = NULL;
     }
 
+    /** will return a sensormaps structure for a given 
+     * framenode. creates a new one, if not already existing.
+     */
+    SensorMaps* getSensorMaps( envire::FrameNode* fn )
+    {
+	const long id = fn->getUniqueId();
+
+	// see if we can return a cached object
+	std::map<long, SensorMaps*>::iterator 
+	    f = nodeMap.find( id );
+
+	if( f != nodeMap.end() )
+	    return f->second;
+
+	// otherwise create a new node
+	SensorMaps* sm = new SensorMaps( fn );
+	nodeMap.insert( make_pair( id, sm ) );
+
+	// call update bounds once, so we have an initial
+	// idea of the bounds
+	sm->updateBounds();
+
+	return sm;
+    }
+
+    /** helper struct that caches some information on the structure of the map
+     * graph and associated information (e.g. bounding box).
+     */
     struct SensorMaps
     {
 	explicit SensorMaps( envire::FrameNode* a )
-	    : stereoMap(NULL), sparseMap(NULL)
+	    : stereoMap(NULL), sparseMap(NULL), frameNode( a )
 	{
 	    // go through all the maps in the framenode and see if they fit a sensor map 
 	    std::list<envire::CartesianMap*> la = a->getMaps();
@@ -257,25 +347,121 @@ public:
 	    }
 	}
 
+	// update the bounds of the map using the uncertainty 
+	// associated with the framenode 
+	void updateBounds( double sigma = 3.0 )
+	{
+	    // get the extents from the individual maps first
+	    // TODO: cache the extends, since they won't change 
+	    // locally
+	    Eigen::AlignedBox<double, 3> extents;
+	    if( stereoMap )
+		extents.extend( stereoMap->getExtents() );
+	    if( sparseMap )
+		extents.extend( sparseMap->getExtents() );
+
+	    // the strategy is now to take the corner points, 
+	    // and transform them including the uncertainty 
+	    // provided. These points should all be included
+	    // in the final bounds and should roughly provide
+	    // the bounding box for the map including uncertainty
+
+	    // reset the bounds
+	    bounds.setEmpty();
+
+	    // go through all 8 corners of the extents
+	    for( int i=0; i<8; i++ )
+	    {
+		Eigen::Vector3d corner;
+		for( int j=0; j<3; j++ )
+		    corner[j] = (i>>j)&1 ? extents.min()[j] : extents.max()[j];
+
+		// Transform the points with uncertainty
+		envire::PointWithUncertainty uncertain_corner = 
+		    frameNode->getTransformWithUncertainty() * envire::PointWithUncertainty(corner);
+
+		// do a cholesky decomposition of the covariance matrix
+		// in order to get the sigma points
+		Eigen::LLT<Eigen::Matrix3d> llt;
+		llt.compute( uncertain_corner.getCovariance() );
+		Eigen::Matrix3d sigma_points = llt.matrixL();
+
+		// extend the bounds by the sigma points
+		for( int j=0; j<3; j++ )
+		{
+		    bounds.extend( 
+			    uncertain_corner.getPoint() + sigma_points.col(j) );
+		    bounds.extend( 
+			    uncertain_corner.getPoint() - sigma_points.col(j) );
+		}
+	    }
+	}
+
 	envire::Pointcloud *stereoMap;
 	envire::Featurecloud *sparseMap;
 	// add more maps that can be associated here
+	
+	// store the frameNode pointer
+	envire::FrameNode *frameNode;
+	
+	/// The bounding box of the maps in global frame 
+	/// including uncertainty
+	Eigen::AlignedBox<double, 3> bounds;
     };
 
-    void associateNodes( envire::FrameNode* a, envire::FrameNode* b )
+    /** 
+     * associate two framenodes, if they are within a feasable distance
+     * between each other and have overlapping bounding boxes.
+     *
+     * @return true if an association has been added
+     */ 
+    bool associateNodes( envire::FrameNode* a, envire::FrameNode* b )
     {
+	// TODO make this a configurable parameter
+	const double max_distance = 25.0;
+
+	// discard if distance between is too high
+	// TODO: this is potentially dangerous as it doesn't take the
+	// uncertainty into account... see how to make this safer, but still
+	// fast.
+	if( (a->getTransform().translation() - b->getTransform().translation()).norm() > max_distance )
+	    return false;
+
 	// get the sensor map objects for both frameNodes
-	// (could be cached later)
-	SensorMaps sma( a ), smb( b );
+	SensorMaps 
+	    *sma = getSensorMaps( a ), 
+	    *smb = getSensorMaps( b );
+
+	// check if the bounding boxes have a common intersection
+	// and return false if not
+	if( sma->bounds.intersection( smb->bounds ).isEmpty() )
+	    return false;
+
+	// TODO make this a configurable parameter
+	const int min_correspondences = 7;
 
 	// call the individual association methods
-	if( sma.stereoMap && smb.stereoMap )
-	    associateStereoMap( sma.stereoMap, smb.stereoMap );
-	
+	if( sma->sparseMap && smb->sparseMap )
+	{
+	    if( associateSparseMap( sma->sparseMap, smb->sparseMap ) > min_correspondences )
+	    {
+		if( sma->stereoMap && smb->stereoMap )
+		    associateStereoMap( sma->stereoMap, smb->stereoMap );
 
-	if( sma.sparseMap && smb.sparseMap )
-	    associateSparseMap( sma.sparseMap, smb.sparseMap );
-	
+		return true;
+	    }
+	    else
+		return false;
+	}
+	else if( sma->stereoMap && smb->stereoMap )
+	{
+	    associateStereoMap( sma->stereoMap, smb->stereoMap );
+	    return true;
+	}
+
+	// TODO store both successful and unsuccessful associations
+	// since it doesn't make sense to try to associate twice
+	return true;
     }
 
     void associateStereoMap( envire::Pointcloud* pc1, envire::Pointcloud* pc2 ) 
@@ -322,7 +508,13 @@ public:
 		);
     }
 
-    void associateSparseMap( envire::Featurecloud *fc1, envire::Featurecloud *fc2 )
+    /** 
+     * try to associate two sparse feature clouds.
+     *
+     * @return the number of matching interframe features. This can be used as a measure of quality
+     * for the match.
+     */
+    int associateSparseMap( envire::Featurecloud *fc1, envire::Featurecloud *fc2 )
     {
 	stereo::StereoFeatures f;
 	f.calculateInterFrameCorrespondences( fc1, fc2, stereo::FILTER_ISOMETRY );
@@ -353,11 +545,8 @@ public:
 		    envireCov2HogmanInf( cov )
 		    );
 	}
-    }
 
-    ~PoseGraph()
-    {
-	delete optimizer;
+	return f.getInterFrameCorrespondences().size();
     }
 
 };
