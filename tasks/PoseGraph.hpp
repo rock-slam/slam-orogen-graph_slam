@@ -228,7 +228,8 @@ public:
 	// configure the processing chain for the feature image 
 	assert( currentBodyFrame );
 	featureFrame->setTransform( sensor2body );
-	featureArray.copyTo( *featurecloud.get() );
+	// copy only up to a certain distance to omit the features further out
+	featureArray.copyTo( *featurecloud.get(), 5.0 );
 
 	envire::Featurecloud::Ptr featurePc = new envire::Featurecloud();
 	env->setFrameNode( featurePc.get(), currentBodyFrame.get() );
