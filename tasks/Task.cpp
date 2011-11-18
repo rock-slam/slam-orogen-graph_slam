@@ -35,6 +35,18 @@ void Task::stereo_featuresTransformerCallback(const base::Time &ts, const ::ster
     lastFeatureArrayValid = true;
 }
 
+template <class T>
+bool testCovariance( const T& cov )
+{
+    bool result = true;
+    result = result || cov.isApprox( cov.transpose() );
+
+    Eigen::SelfAdjointEigenSolver<T> eigensolver( cov );
+    result = result || eigensolver.eigenvalues().minCoeff() > 0;
+
+    return result;
+}
+
 void Task::distance_framesTransformerCallback(const base::Time &ts, const ::base::samples::DistanceImage &distance_frames_sample)
 {
     // get the current transforms
@@ -55,6 +67,16 @@ void Task::distance_framesTransformerCallback(const base::Time &ts, const ::base
 	    << "hermetian : " << body2PrevBody.getCovariance().isApprox( body2PrevBody.getCovariance().transpose() ) << std::endl
 	    << "eigenvalues : " << eigensolver.eigenvalues().transpose() << std::endl;
     */
+    if( !testCovariance( body2PrevBody.getCovariance() ) )
+    {
+	std::cout << "Delta position change has an invalid covariance. Skipping node." << std::endl;
+	return;
+    }
+
+    // for now only allow both dense and sparse together,
+    // and make sure they have the same timestamp
+    if ( lastFeatureArray.time != distance_frames_sample.time )
+	return;
 
     // initialize a new node, and add the sensor readings to it
     graph->initNode( body2PrevBody );
