@@ -101,6 +101,17 @@ public:
     class SensorMaps;
 
 protected:
+    /** maximum distance between nodes, where we check for potential
+     * correspondence 
+     */
+    double max_node_radius;
+
+    /** minimum number of sparse correspondences required to consider a match
+     * successfull.
+     */
+    size_t min_sparse_correspondences;
+
+protected:
     envire::Environment *env;
     AISNavigation::GraphOptimizer3D *optimizer;
     std::map<long, SensorMaps*> nodeMap;
@@ -123,7 +134,9 @@ protected:
 
 public:
     PoseGraph( envire::Environment* env, int num_levels = 3, int node_distance = 2 ) 
-	: env( env ), optimizer( new AISNavigation::HCholOptimizer3D( num_levels, node_distance ) ) 
+	: max_node_radius( 25.0 ), 
+	min_sparse_correspondences( 7 ),
+	env( env ), optimizer( new AISNavigation::HCholOptimizer3D( num_levels, node_distance ) ) 
     {
 	// set-up body frame
 	bodyFrame = new envire::FrameNode();
@@ -353,13 +366,15 @@ public:
 	void updateBounds( double sigma = 3.0 )
 	{
 	    // get the extents from the individual maps first
-	    // TODO: cache the extends, since they won't change 
-	    // locally
-	    Eigen::AlignedBox<double, 3> extents;
-	    if( stereoMap )
-		extents.extend( stereoMap->getExtents() );
-	    if( sparseMap )
-		extents.extend( sparseMap->getExtents() );
+	    if( extents.isEmpty() )
+	    {
+		// cache the extends, since they won't change 
+		// locally
+		if( stereoMap )
+		    extents.extend( stereoMap->getExtents() );
+		if( sparseMap )
+		    extents.extend( sparseMap->getExtents() );
+	    }
 
 	    // the strategy is now to take the corner points, 
 	    // and transform them including the uncertainty 
@@ -405,6 +420,9 @@ public:
 	// store the frameNode pointer
 	envire::FrameNode *frameNode;
 	
+	// cached local bounds
+	Eigen::AlignedBox<double, 3> extents;
+	
 	/// The bounding box of the maps in global frame 
 	/// including uncertainty
 	Eigen::AlignedBox<double, 3> bounds;
@@ -418,14 +436,11 @@ public:
      */ 
     bool associateNodes( envire::FrameNode* a, envire::FrameNode* b )
     {
-	// TODO make this a configurable parameter
-	const double max_distance = 25.0;
-
 	// discard if distance between is too high
 	// TODO: this is potentially dangerous as it doesn't take the
 	// uncertainty into account... see how to make this safer, but still
 	// fast.
-	if( (a->getTransform().translation() - b->getTransform().translation()).norm() > max_distance )
+	if( (a->getTransform().translation() - b->getTransform().translation()).norm() > max_node_radius )
 	    return false;
 
 	// get the sensor map objects for both frameNodes
@@ -438,13 +453,10 @@ public:
 	if( sma->bounds.intersection( smb->bounds ).isEmpty() )
 	    return false;
 
-	// TODO make this a configurable parameter
-	const int min_correspondences = 7;
-
 	// call the individual association methods
 	if( sma->sparseMap && smb->sparseMap )
 	{
-	    if( associateSparseMap( sma->sparseMap, smb->sparseMap, min_correspondences ) >= min_correspondences )
+	    if( associateSparseMap( sma->sparseMap, smb->sparseMap ) >= min_sparse_correspondences )
 	    {
 		if( sma->stereoMap && smb->stereoMap )
 		    associateStereoMap( sma->stereoMap, smb->stereoMap );
@@ -515,13 +527,17 @@ public:
      * @return the number of matching interframe features. This can be used as a measure of quality
      * for the match.
      */
-    int associateSparseMap( envire::Featurecloud *fc1, envire::Featurecloud *fc2, size_t min_correspondences = 3 )
+    size_t associateSparseMap( envire::Featurecloud *fc1, envire::Featurecloud *fc2 )
     {
 	stereo::StereoFeatures f;
+	stereo::FeatureConfiguration config;
+	config.isometryFilterMaxSteps = 1000;
+	f.setConfiguration( config );
+
 	f.calculateInterFrameCorrespondences( fc1, fc2, stereo::FILTER_ISOMETRY );
 	std::vector<std::pair<long, long> > matches = f.getInterFrameCorrespondences();
 
-	if( f.getInterFrameCorrespondences().size() >= min_correspondences )
+	if( f.getInterFrameCorrespondences().size() >= min_sparse_correspondences )
 	{
 	    Eigen::Affine3d bodyBtoBodyA = f.getInterFrameCorrespondenceTransform();
 
