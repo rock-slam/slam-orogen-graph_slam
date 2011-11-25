@@ -128,7 +128,7 @@ protected:
     envire::FrameNode::Ptr featureFrame;
     envire::Featurecloud::Ptr featurecloud;
 
-    // current node
+    // pointer to relevant nodes
     envire::FrameNode::Ptr prevBodyFrame;
     envire::FrameNode::Ptr currentBodyFrame;
 
@@ -165,6 +165,38 @@ public:
 	// delete the nodeMap objects
 	for( std::map<long, SensorMaps*>::iterator it = nodeMap.begin(); it != nodeMap.end(); it++ )
 	    delete it->second;
+    }
+
+    void initNode( const envire::TransformWithUncertainty &body2bodyPrev, const envire::TransformWithUncertainty &body2world )
+    {
+	// handle relative poses
+	initNode( body2bodyPrev );
+
+	// handle the root vertex, which should contain the rotation constraints given
+	// by body2world
+	AISNavigation::PoseGraph3D::Vertex *root_vertex = optimizer->vertex( 0 );
+	if( !root_vertex )
+	{
+	    // create a root node 
+	    root_vertex = optimizer->addVertex( 
+		    0,
+		    Transformation3(),
+		    Matrix6::eye(1.0) );
+	}
+
+	// create a copy of the body2world transform, and set the covariance
+	// for the position very large
+	envire::TransformWithUncertainty body2root = body2world;
+	Eigen::Matrix<double,6,6> cov = body2root.getCovariance();
+	cov.bottomRightCorner<3,3>() = Eigen::Vector3d( 1e8, 1e8, 1e8 ).asDiagonal();
+	body2root.setCovariance( cov );
+
+	optimizer->addEdge( 
+		root_vertex,
+		optimizer->vertex( currentBodyFrame->getUniqueId() ),
+		eigen2Hogman( body2root.getTransform() ),
+		envireCov2HogmanInf( body2root.getCovariance() )
+		);
     }
 
     /** will prepare a new node based on an initial transformation
@@ -552,6 +584,8 @@ public:
     {
 	stereo::StereoFeatures f;
 	stereo::FeatureConfiguration config;
+	config.isometryFilterThreshold = 1.0;
+	config.distanceFactor = 1.7;
 	config.isometryFilterMaxSteps = 1000;
 	f.setConfiguration( config );
 

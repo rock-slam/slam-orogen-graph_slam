@@ -58,9 +58,6 @@ void Task::distance_framesTransformerCallback(const base::Time &ts, const ::base
     if( !_body2odometry.get( ts, body2Odometry ) )
 	return;
 
-    body2PrevBody = body2Odometry.preCompositionInv( lastBody2Odometry );
-    lastBody2Odometry = body2Odometry;
-
     std::cerr << "### add node" << std::endl;
 
     /*
@@ -86,7 +83,7 @@ void Task::distance_framesTransformerCallback(const base::Time &ts, const ::base
 	return;
 
     // initialize a new node, and add the sensor readings to it
-    graph->initNode( body2PrevBody );
+    graph->initNode( body2PrevBody, body2Odometry );
     graph->addSensorReading( distance_frames_sample, lcamera2body );
     if( lastFeatureArrayValid )
     {
