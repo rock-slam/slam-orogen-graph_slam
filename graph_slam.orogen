@@ -35,6 +35,7 @@ task_context "Task" do
 
 	transformation("laser", "body")	
 	transformation("lcamera", "body")
+	transformation("body", "odometry")
 
 	align_port("odometry_delta_samples", 0.1)
 	align_port("stereo_features", 0.1)

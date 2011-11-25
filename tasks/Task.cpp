@@ -54,6 +54,13 @@ void Task::distance_framesTransformerCallback(const base::Time &ts, const ::base
     if( !_lcamera2body.get( ts, lcamera2body ) )
 	return;
 
+    envire::TransformWithUncertainty body2Odometry;
+    if( !_body2odometry.get( ts, body2Odometry ) )
+	return;
+
+    body2PrevBody = body2Odometry.preCompositionInv( lastBody2Odometry );
+    lastBody2Odometry = body2Odometry;
+
     std::cerr << "### add node" << std::endl;
 
     /*
@@ -114,6 +121,7 @@ bool Task::configureHook()
     graph = new PoseGraph( env );
 
     body2PrevBody = envire::TransformWithUncertainty::Identity();
+    lastBody2Odometry = envire::TransformWithUncertainty::Identity();
 
     return true;
 }
