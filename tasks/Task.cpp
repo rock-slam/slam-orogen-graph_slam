@@ -26,7 +26,7 @@ void Task::odometry_delta_samplesTransformerCallback(const base::Time &ts, const
 {
     // integrate the delta changes into the body2PrevBody
     envire::TransformWithUncertainty deltaBody2PrevBody( odometry_delta_samples_sample );
-    body2PrevBody = deltaBody2PrevBody * body2PrevBody;
+    body2PrevBody = body2PrevBody * deltaBody2PrevBody;
 }
 
 void Task::stereo_featuresTransformerCallback(const base::Time &ts, const ::stereo::StereoFeatureArray &feature_arrays_sample)
