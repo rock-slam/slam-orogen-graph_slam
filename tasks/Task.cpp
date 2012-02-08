@@ -66,17 +66,6 @@ void Task::distance_framesTransformerCallback(const base::Time &ts, const ::base
 
     std::cerr << "### add node" << std::endl;
 
-    /*
-    const double error_offset = 0.01;
-    body2PrevBody.setCovariance( body2PrevBody.getCovariance() +
-	    Eigen::Matrix<double,6,6>::Identity() * error_offset );
-
-    Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double,6,6> > eigensolver( body2PrevBody.getCovariance() );
-    std::cout << body2PrevBody.getCovariance() << std::endl;
-    std::cout << "tests : " << std::endl
-	    << "hermetian : " << body2PrevBody.getCovariance().isApprox( body2PrevBody.getCovariance().transpose() ) << std::endl
-	    << "eigenvalues : " << eigensolver.eigenvalues().transpose() << std::endl;
-    */
     if( !testCovariance( body2PrevBody.getCovariance() ) )
     {
 	std::cout << "Delta position change has an invalid covariance. Skipping node." << std::endl;
