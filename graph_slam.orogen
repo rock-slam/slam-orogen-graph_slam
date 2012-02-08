@@ -22,6 +22,8 @@ task_context "Task" do
 	needs_reliable_connection.
 	doc 'distance images'
 
+    input_port('texture_images', '/base/samples/frame/Frame')
+
     input_port('stereo_features', '/stereo/StereoFeatureArray').
 	needs_reliable_connection.
 	doc 'sparse feature array'
@@ -38,6 +40,7 @@ task_context "Task" do
 	transformation("body", "odometry")
 
 	align_port("odometry_delta_samples", 0.1)
+	align_port("texture_images", 0.1)
 	align_port("stereo_features", 0.1)
 	align_port("distance_frames", 0.1)
     end

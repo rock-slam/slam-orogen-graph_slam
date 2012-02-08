@@ -9,12 +9,12 @@
 using namespace graph_slam;
 
 Task::Task(std::string const& name)
-    : TaskBase(name), env(NULL), lastFeatureArrayValid( false )
+    : TaskBase(name), env(NULL), lastFeatureArrayValid( false ), lastTextureImageValid( false )
 {
 }
 
 Task::Task(std::string const& name, RTT::ExecutionEngine* engine)
-    : TaskBase(name, engine), env(NULL), lastFeatureArrayValid( false )
+    : TaskBase(name, engine), env(NULL), lastFeatureArrayValid( false ), lastTextureImageValid( false )
 {
 }
 
@@ -35,14 +35,20 @@ void Task::stereo_featuresTransformerCallback(const base::Time &ts, const ::ster
     lastFeatureArrayValid = true;
 }
 
+void Task::texture_imagesTransformerCallback(const base::Time &ts, const ::base::samples::frame::Frame &texture_images_sample)
+{
+    textureImage = texture_images_sample; 
+    lastTextureImageValid = true;
+}
+
 template <class T>
 bool testCovariance( const T& cov )
 {
     bool result = true;
-    result = result || cov.isApprox( cov.transpose() );
+    result = result && cov.isApprox( cov.transpose() );
 
     Eigen::SelfAdjointEigenSolver<T> eigensolver( cov );
-    result = result || eigensolver.eigenvalues().minCoeff() > 0;
+    result = result && eigensolver.eigenvalues().real().minCoeff() > 0;
 
     return result;
 }
@@ -84,7 +90,7 @@ void Task::distance_framesTransformerCallback(const base::Time &ts, const ::base
 
     // initialize a new node, and add the sensor readings to it
     graph->initNode( body2PrevBody, body2Odometry );
-    graph->addSensorReading( distance_frames_sample, lcamera2body );
+    graph->addSensorReading( distance_frames_sample, lcamera2body, textureImage );
     if( lastFeatureArrayValid )
     {
 	graph->addSensorReading( lastFeatureArray, lcamera2body );

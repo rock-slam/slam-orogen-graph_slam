@@ -16,6 +16,9 @@
 
 #include <stereo/sparse_stereo.hpp>
 
+#include <envire/operators/MLSProjection.hpp>
+#include <envire/maps/MLSGrid.hpp>
+
 namespace graph_slam
 {
 
@@ -122,6 +125,7 @@ protected:
     // chain for processing distance images
     envire::FrameNode::Ptr distFrame;
     envire::DistanceGrid::Ptr distGrid;
+    envire::ImageRGB24::Ptr textureGrid;
     envire::DistanceGridToPointcloud::Ptr distOp;
 
     // chain for feature clouds
@@ -131,6 +135,10 @@ protected:
     // pointer to relevant nodes
     envire::FrameNode::Ptr prevBodyFrame;
     envire::FrameNode::Ptr currentBodyFrame;
+
+    // MLS map and projection operator
+    envire::MLSGrid::Ptr mlsGrid;
+    envire::MLSProjection::Ptr mlsOp;
 
 public:
     PoseGraph( envire::Environment* env, int num_levels = 3, int node_distance = 2 ) 
@@ -155,6 +163,20 @@ public:
 	env->addChild( bodyFrame.get(), featureFrame.get() );
 	featurecloud = new envire::Featurecloud();
 	env->setFrameNode( featurecloud.get(), featureFrame.get() );
+	
+	// set-up the target mls
+	const double cell_size = 0.2;
+	const double grid_size = 150;
+	mlsGrid = new envire::MLSGrid( 
+		grid_size / cell_size, grid_size / cell_size, 
+		cell_size, cell_size, -grid_size / 2.0, -grid_size / 2.0 );
+	mlsGrid->setHorizontalPatchThickness( 0.5 );
+	mlsGrid->setGapSize( 1.0 );
+	env->setFrameNode( mlsGrid.get(), env->getRootNode() );
+	mlsOp = new envire::MLSProjection();
+	mlsOp->useUncertainty( false );
+	env->attachItem( mlsOp.get() );
+	mlsOp->addOutput( mlsGrid.get() );
     }
 
     ~PoseGraph()
@@ -235,11 +257,12 @@ public:
 
     /** adds a sensor reading for a distance image to an initialized node
      */
-    void addSensorReading( const base::samples::DistanceImage& distImage, const Eigen::Affine3d& sensor2body )
+    void addSensorReading( const base::samples::DistanceImage& distImage, const Eigen::Affine3d& sensor2body, const base::samples::frame::Frame& textureImage )
     {
 	// configure the processing chain for the distance image
 	assert( currentBodyFrame );
 
+	// create new distance grid object
 	distFrame->setTransform( sensor2body );
 	if( !distGrid )
 	{
@@ -252,6 +275,22 @@ public:
 	}
 	distGrid->copyFromDistanceImage( distImage );
 
+	// create new imagegrid object if not available
+	if( !textureGrid )
+	{
+	    // copy the scaling properties from distanceImage
+	    // TODO this is a hack!
+	    textureGrid = new envire::ImageRGB24( 
+		    distImage.width, distImage.height, 
+		    distImage.scale_x, distImage.scale_y, 
+		    distImage.center_x, distImage.center_y );
+	    env->attachItem( textureGrid.get() );
+
+	    distOp->addInput( textureGrid.get() );
+	    textureGrid->setFrameNode( distFrame.get() );
+	}
+	textureGrid->copyFromFrame( textureImage );
+
 	envire::Pointcloud::Ptr distPc = new envire::Pointcloud();
 	env->setFrameNode( distPc.get(), currentBodyFrame.get() );
 	distPc->setLabel("dense");
@@ -259,6 +298,8 @@ public:
 	distOp->addOutput( distPc.get() );
 
 	distOp->updateAll();
+
+	mlsOp->addInput( distPc.get() );
 
 	/*
 	envire::GraphViz gv;
@@ -328,6 +369,9 @@ public:
 	// perform the graph optimization
 	const int iterations = 5;
 	optimizer->optimize( iterations, true );
+
+	mlsGrid->clear();
+	mlsOp->updateAll();
 
 	// write the poses back to the environment
 	// for now, write all the poses back, could add an updated flag

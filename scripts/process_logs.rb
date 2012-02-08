@@ -41,6 +41,7 @@ Orocos::Process.run 'graph_slam_test', 'valgrind'=>false, "wait" => 1000 do |p|
     replay.log.odometry.odometry_samples.connect_to( graph_slam.dynamic_transformations, :type => :buffer, :size => 1000 )
     replay.log.stereo.distance_frame.connect_to( graph_slam.distance_frames, :type => :buffer, :size => 2 )
     replay.log.stereo.stereo_features.connect_to( graph_slam.stereo_features, :type => :buffer, :size => 2 )
+    replay.log.camera_right.frame.connect_to( graph_slam.texture_images, :type => :buffer, :size => 2 )
 
     tf = Asguard::Transform.new [:dynamixel]
     tf.setup_filters replay
@@ -48,9 +49,9 @@ Orocos::Process.run 'graph_slam_test', 'valgrind'=>false, "wait" => 1000 do |p|
     replay.log.align( :use_sample_time )
     graph_slam.debug_viz = true
 
+    tf.configure_task graph_slam
     graph_slam.configure
     graph_slam.start
-    tf.configure_task graph_slam
 
     Vizkit.control replay.log
     Vizkit.exec

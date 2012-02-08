@@ -29,6 +29,7 @@ namespace graph_slam {
         virtual void odometry_delta_samplesTransformerCallback(const base::Time &ts, const ::base::samples::RigidBodyState &odometry_delta_samples_sample);
         virtual void distance_framesTransformerCallback(const base::Time &ts, const ::base::samples::DistanceImage &distance_frames_sample);
         virtual void stereo_featuresTransformerCallback(const base::Time &ts, const ::stereo::StereoFeatureArray &feature_arrays_sample);
+        virtual void texture_imagesTransformerCallback(const base::Time &ts, const ::base::samples::frame::Frame &texture_images_sample);
 
 	QtThreadedWidget<vizkit::EnvireWidget> viz;
 
@@ -39,6 +40,9 @@ namespace graph_slam {
 
 	bool lastFeatureArrayValid;
 	stereo::StereoFeatureArray lastFeatureArray;
+
+	bool lastTextureImageValid;
+	base::samples::frame::Frame textureImage;
 
     public:
         Task(std::string const& name = "graph_slam::Task");
