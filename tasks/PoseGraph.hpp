@@ -184,7 +184,7 @@ public:
 
 	// create a new hogman vertex for this node
 	AISNavigation::PoseGraph3D::Vertex *new_vertex = optimizer->addVertex( 
-		currentBodyFrame->getUniqueId(),
+		currentBodyFrame->getUniqueIdSuffix(),
 		Transformation3(),
 		Matrix6::eye(1.0) );
 
@@ -193,7 +193,7 @@ public:
 	if( prevBodyFrame )
 	{
 	    optimizer->addEdge( 
-		    optimizer->vertex( prevBodyFrame->getUniqueId() ),
+		    optimizer->vertex( prevBodyFrame->getUniqueIdSuffix() ),
 		    new_vertex,
 		    eigen2Hogman( body2bodyPrev.getTransform() ),
 		    envireCov2HogmanInf( body2bodyPrev.getCovariance() )
@@ -273,10 +273,21 @@ public:
 		it != optimizer->vertices().end(); it++ )
 	{
 	    // don't associate with self
-	    if( currentBodyFrame->getUniqueId() != it->first )
+	    if( currentBodyFrame->getUniqueIdSuffix() != it->first )
 	    {
-		envire::FrameNode::Ptr fn = env->getItem<envire::FrameNode>( it->first ).get();
-		std::cout << "associate node " << fn->getUniqueId() << " with " << currentBodyFrame->getUniqueId() << "... ";
+                const int id = it->first; 
+                std::string env_item_id;
+                if(id == 0 || env->getEnvironmentPrefix() == "")
+                {
+                    env_item_id =  boost::lexical_cast<std::string>(id);
+                }
+                else
+                {
+                    env_item_id = env->getEnvironmentPrefix() + '/';
+                    env_item_id += boost::lexical_cast<std::string>(id);
+                }
+		envire::FrameNode::Ptr fn = env->getItem<envire::FrameNode>( env_item_id ).get();
+		std::cout << "associate node " << fn->getUniqueIdSuffix() << " with " << currentBodyFrame->getUniqueIdSuffix() << "... ";
 		bool result = associateNodes( fn.get(), currentBodyFrame.get() ); 
 		std::cout << (result ? "match" : "no match") << std::endl;
 	    }
@@ -300,7 +311,17 @@ public:
 		    hogmanCov2EnvireCov( vertex->covariance ) );
 
 	    // and set it in envire for the frameNode with the corresponding id
-	    envire::FrameNode::Ptr fn = env->getItem<envire::FrameNode>( id ).get();
+            std::string env_item_id;
+            if(id == 0 || env->getEnvironmentPrefix() == "")
+            {
+                env_item_id =  boost::lexical_cast<std::string>(id);
+            }
+            else
+            {
+                env_item_id = env->getEnvironmentPrefix() + '/';
+                env_item_id += boost::lexical_cast<std::string>(id);
+            }
+	    envire::FrameNode::Ptr fn = env->getItem<envire::FrameNode>( env_item_id ).get();
 	    fn->setTransform( tu );
 
 	    // update the bounds 
@@ -321,7 +342,7 @@ public:
      */
     SensorMaps* getSensorMaps( envire::FrameNode* fn )
     {
-	const long id = fn->getUniqueId();
+	const long id = fn->getUniqueIdSuffix();
 
 	// see if we can return a cached object
 	std::map<long, SensorMaps*>::iterator 
@@ -514,8 +535,8 @@ public:
 	// add the egde to the optimization framework 
 	// this will update an existing edge
 	optimizer->addEdge( 
-		optimizer->vertex( pc1->getFrameNode()->getUniqueId() ),
-		optimizer->vertex( pc2->getFrameNode()->getUniqueId() ),
+		optimizer->vertex( pc1->getFrameNode()->getUniqueIdSuffix() ),
+		optimizer->vertex( pc2->getFrameNode()->getUniqueIdSuffix() ),
 		eigen2Hogman( bodyBtoBodyA ),
 		envireCov2HogmanInf( cov )
 		);
@@ -556,8 +577,8 @@ public:
 	    // add the egde to the optimization framework 
 	    // this will update an existing edge
 	    optimizer->addEdge( 
-		    optimizer->vertex( fc1->getFrameNode()->getUniqueId() ),
-		    optimizer->vertex( fc2->getFrameNode()->getUniqueId() ),
+		    optimizer->vertex( fc1->getFrameNode()->getUniqueIdSuffix() ),
+		    optimizer->vertex( fc2->getFrameNode()->getUniqueIdSuffix() ),
 		    eigen2Hogman( bodyBtoBodyA ),
 		    envireCov2HogmanInf( cov )
 		    );
