@@ -215,7 +215,7 @@ public:
 
 	optimizer->addEdge( 
 		root_vertex,
-		optimizer->vertex( currentBodyFrame->getUniqueId() ),
+		optimizer->vertex( currentBodyFrame->getUniqueIdNumericalSuffix() ),
 		eigen2Hogman( body2root.getTransform() ),
 		envireCov2HogmanInf( body2root.getCovariance() )
 		);
@@ -238,7 +238,7 @@ public:
 
 	// create a new hogman vertex for this node
 	AISNavigation::PoseGraph3D::Vertex *new_vertex = optimizer->addVertex( 
-		currentBodyFrame->getUniqueIdSuffix(),
+		currentBodyFrame->getUniqueIdNumericalSuffix(),
 		Transformation3(),
 		Matrix6::eye(1.0) );
 
@@ -247,7 +247,7 @@ public:
 	if( prevBodyFrame )
 	{
 	    optimizer->addEdge( 
-		    optimizer->vertex( prevBodyFrame->getUniqueIdSuffix() ),
+		    optimizer->vertex( prevBodyFrame->getUniqueIdNumericalSuffix() ),
 		    new_vertex,
 		    eigen2Hogman( body2bodyPrev.getTransform() ),
 		    envireCov2HogmanInf( body2bodyPrev.getCovariance() )
@@ -346,7 +346,7 @@ public:
 		it != optimizer->vertices().end(); it++ )
 	{
 	    // don't associate with self
-	    if( currentBodyFrame->getUniqueIdSuffix() != it->first )
+	    if( currentBodyFrame->getUniqueIdNumericalSuffix() != it->first )
 	    {
                 const int id = it->first; 
                 std::string env_item_id;
@@ -360,7 +360,7 @@ public:
                     env_item_id += boost::lexical_cast<std::string>(id);
                 }
 		envire::FrameNode::Ptr fn = env->getItem<envire::FrameNode>( env_item_id ).get();
-		std::cout << "associate node " << fn->getUniqueIdSuffix() << " with " << currentBodyFrame->getUniqueIdSuffix() << "... ";
+		std::cout << "associate node " << fn->getUniqueIdNumericalSuffix() << " with " << currentBodyFrame->getUniqueIdNumericalSuffix() << "... ";
 		bool result = associateNodes( fn.get(), currentBodyFrame.get() ); 
 		std::cout << (result ? "match" : "no match") << std::endl;
 	    }
@@ -418,7 +418,7 @@ public:
      */
     SensorMaps* getSensorMaps( envire::FrameNode* fn )
     {
-	const long id = fn->getUniqueIdSuffix();
+	const long id = fn->getUniqueIdNumericalSuffix();
 
 	// see if we can return a cached object
 	std::map<long, SensorMaps*>::iterator 
@@ -611,8 +611,8 @@ public:
 	// add the egde to the optimization framework 
 	// this will update an existing edge
 	optimizer->addEdge( 
-		optimizer->vertex( pc1->getFrameNode()->getUniqueIdSuffix() ),
-		optimizer->vertex( pc2->getFrameNode()->getUniqueIdSuffix() ),
+		optimizer->vertex( pc1->getFrameNode()->getUniqueIdNumericalSuffix() ),
+		optimizer->vertex( pc2->getFrameNode()->getUniqueIdNumericalSuffix() ),
 		eigen2Hogman( bodyBtoBodyA ),
 		envireCov2HogmanInf( cov )
 		);
@@ -655,8 +655,8 @@ public:
 	    // add the egde to the optimization framework 
 	    // this will update an existing edge
 	    optimizer->addEdge( 
-		    optimizer->vertex( fc1->getFrameNode()->getUniqueIdSuffix() ),
-		    optimizer->vertex( fc2->getFrameNode()->getUniqueIdSuffix() ),
+		    optimizer->vertex( fc1->getFrameNode()->getUniqueIdNumericalSuffix() ),
+		    optimizer->vertex( fc2->getFrameNode()->getUniqueIdNumericalSuffix() ),
 		    eigen2Hogman( bodyBtoBodyA ),
 		    envireCov2HogmanInf( cov )
 		    );
