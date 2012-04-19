@@ -31,7 +31,7 @@ namespace graph_slam {
         virtual void stereo_featuresTransformerCallback(const base::Time &ts, const ::stereo::StereoFeatureArray &feature_arrays_sample);
         virtual void texture_imagesTransformerCallback(const base::Time &ts, const ::base::samples::frame::Frame &texture_images_sample);
 
-	QtThreadedWidget<vizkit::EnvireWidget> viz;
+	QtThreadedWidget<envire::EnvireWidget> viz;
 
 	envire::Environment *env;
 	envire::TransformWithUncertainty body2PrevBody, lastBody2Odometry;
