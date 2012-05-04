@@ -19,7 +19,7 @@ namespace vizkit
 
 namespace graph_slam {
 
-    class PoseGraph;
+    class VisualPoseGraph;
 
     class Task : public TaskBase
     {
@@ -36,7 +36,7 @@ namespace graph_slam {
 	envire::Environment *env;
 	envire::TransformWithUncertainty body2PrevBody, lastBody2Odometry;
 	bool firstNode;
-	PoseGraph *graph;
+	VisualPoseGraph *graph;
 
 	bool lastFeatureArrayValid;
 	stereo::StereoFeatureArray lastFeatureArray;

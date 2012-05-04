@@ -2,6 +2,7 @@ name "graph_slam"
 
 using_library 'hogman'
 using_library 'envire'
+using_library 'graph_slam'
 using_library 'vizkit'
 
 import_types_from 'base'

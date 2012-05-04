@@ -4,7 +4,7 @@
 #include <envire/tools/GraphViz.hpp>
 #include <Eigen/Dense>
 
-#include "PoseGraph.hpp"
+#include <graph_slam/VisualPoseGraph.hpp>
 
 using namespace graph_slam;
 
@@ -110,7 +110,8 @@ bool Task::configureHook()
 	viz.getWidget()->updateData( env );
     }
 
-    graph = new PoseGraph( env );
+    graph = new VisualPoseGraph( env );
+    graph->addNode( env->getRootNode() );
 
     body2PrevBody = envire::TransformWithUncertainty::Identity();
     lastBody2Odometry = envire::TransformWithUncertainty::Identity();
