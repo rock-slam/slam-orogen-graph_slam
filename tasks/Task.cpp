@@ -111,7 +111,12 @@ bool Task::configureHook()
     }
 
     graph = new VisualPoseGraph( env );
-    graph->addNode( env->getRootNode() );
+
+    // add root node
+    graph->addNode( env->getRootNode(), 
+	    envire::TransformWithUncertainty(
+		Eigen::Affine3d::Identity(),
+		(base::Vector6d::Ones() * 1e-3).asDiagonal() ) );
 
     body2PrevBody = envire::TransformWithUncertainty::Identity();
     lastBody2Odometry = envire::TransformWithUncertainty::Identity();
