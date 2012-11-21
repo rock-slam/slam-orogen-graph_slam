@@ -3,7 +3,6 @@
     </description>
     <author>Jakob Schwendner/jakob.schwendner@dfki.de</author>
     <depend package="slam/hogman"/>
-    <depend package="slam/pcl"/>
     <depend package="slam/envire"/>
     <depend package="slam/graph_slam"/>
     <depend package="drivers/orogen/transformer"/>
