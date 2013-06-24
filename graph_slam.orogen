@@ -4,9 +4,13 @@ using_library 'hogman'
 using_library 'envire'
 using_library 'graph_slam'
 using_library 'vizkit'
+using_library 'g2o'
+using_library 'velodyne_lidar'
 
 import_types_from 'base'
 import_types_from 'stereo'
+import_types_from 'envire'
+import_types_from 'velodyne_lidar/MultilevelLaserScan.h'
 
 task_context "Task" do
 
@@ -48,6 +52,47 @@ task_context "Task" do
 
     port_driven
 end
+
+task_context "VelodyneSLAM" do
+    needs_configuration
+    
+    ## slam configuration
+    property('vertex_distance', 'double', 0.5).
+        doc 'the translation after a new laser scan is added to the graph'
+    
+    
+    ## envire configuration
+    property('envire_period', 'double', 1.0).
+        doc 'update period in s for the envire_map port.'
+    property('environment_debug_path', 'string', "").
+        doc 'if this property is set, the final environment will be written to the given file path.'
+    property('use_mls', 'bool', false).
+        doc 'show a MLS map in envire.'
+
+    ## input ports
+    input_port('lidar_samples', '/velodyne_lidar/MultilevelLaserScan').
+        needs_reliable_connection.
+        doc 'timestamped 3d laser scans'
+        
+    ## output ports
+    output_port('pose_samples', '/base/samples/RigidBodyState').
+        doc 'timestamped samples of the current pose of the robot.'
+    
+    output_port('envire_map', ro_ptr('std/vector</envire/BinaryEvent>'))
+    
+    ## transformer config
+    transformer do
+        max_latency( 0.5 )
+
+        transformation("laser", "odometry")
+        transformation("odometry", "world")
+
+        align_port("lidar_samples", 0.2)
+    end
+    
+    port_driven
+end
+
 
 # Declares a deployment, i.e. an actual executable that contains various tasks.
 deployment "graph_slam_test" do

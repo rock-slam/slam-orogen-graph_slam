@@ -5,6 +5,7 @@
     <depend package="slam/hogman"/>
     <depend package="slam/envire"/>
     <depend package="slam/graph_slam"/>
+    <depend package="slam/g2o"/>
     <depend package="drivers/orogen/transformer"/>
     <depend package="image_processing/orogen/stereo"/>
     <depend package="gui/vizkit"/>
