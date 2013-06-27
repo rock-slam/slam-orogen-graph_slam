@@ -46,7 +46,7 @@ void VelodyneSLAM::lidar_samplesTransformerCallback(const base::Time &ts, const 
     if(body2odometry.hasValidPosition() && body2odometry.hasValidOrientation())
     {
         Eigen::Affine3d odometry_delta = last_odometry_sample.getTransform().inverse() * body2odometry.getTransform();
-        if(odometry_delta.translation().norm() > _vertex_distance.get())
+        if(odometry_delta.translation().norm() > _vertex_distance.get() || optimizer.vertices().size() == 0)
         {
             // add point cloud to envire
             envire::Pointcloud* envire_pointcloud = new envire::Pointcloud();
