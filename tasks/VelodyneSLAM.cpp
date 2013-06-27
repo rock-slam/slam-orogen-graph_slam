@@ -30,22 +30,22 @@ VelodyneSLAM::~VelodyneSLAM()
 void VelodyneSLAM::lidar_samplesTransformerCallback(const base::Time &ts, const ::velodyne_lidar::MultilevelLaserScan &lidar_sample)
 {
     // get transformation
-    Eigen::Affine3d laser2odometry;
-    if (!_laser2odometry.get(ts, laser2odometry, false))
+    Eigen::Affine3d laser2body;
+    if (!_laser2body.get(ts, laser2body))
     {
-        std::cerr << "skip, have no laser2odometry transformation sample!" << std::endl;
+        std::cerr << "skip, have no laser2body transformation sample!" << std::endl;
         return;
     }
-    base::samples::RigidBodyState odometry2world;
-    if (!_odometry2world.get(ts, odometry2world, true))
+    base::samples::RigidBodyState body2odometry;
+    if (!_body2odometry.get(ts, body2odometry, true))
     {
-        std::cerr << "skip, have no odometry2world transformation sample!" << std::endl;
+        std::cerr << "skip, have no body2odometry transformation sample!" << std::endl;
         return;
     }
     
-    if(odometry2world.hasValidPosition() && odometry2world.hasValidOrientation())
+    if(body2odometry.hasValidPosition() && body2odometry.hasValidOrientation())
     {
-        Eigen::Affine3d odometry_delta = last_odometry_sample.getTransform().inverse() * odometry2world.getTransform();
+        Eigen::Affine3d odometry_delta = last_odometry_sample.getTransform().inverse() * body2odometry.getTransform();
         if(odometry_delta.translation().norm() > _vertex_distance.get())
         {
             // add point cloud to envire
@@ -59,8 +59,8 @@ void VelodyneSLAM::lidar_samplesTransformerCallback(const base::Time &ts, const 
             try
             {
                 // add new vertex to graph
-                velodyne_lidar::ConvertHelper::convertScanToPointCloud(lidar_sample, envire_pointcloud->vertices, laser2odometry);
-                if(!optimizer.addVertex(odometry2world, envire_pointcloud))
+                velodyne_lidar::ConvertHelper::convertScanToPointCloud(lidar_sample, envire_pointcloud->vertices, laser2body);
+                if(!optimizer.addVertex(body2odometry, envire_pointcloud))
                     throw std::runtime_error("failed to add a new vertex");
                 
                 // run optimization
@@ -87,7 +87,7 @@ void VelodyneSLAM::lidar_samplesTransformerCallback(const base::Time &ts, const 
                 std::cerr << "Exception while handling lidar sample: " << e.what() << std::endl;
             }
             
-            last_odometry_sample = odometry2world;
+            last_odometry_sample = body2odometry;
         }
     }
 }

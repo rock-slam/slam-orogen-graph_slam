@@ -84,8 +84,8 @@ task_context "VelodyneSLAM" do
     transformer do
         max_latency( 0.5 )
 
-        transformation("laser", "odometry")
-        transformation("odometry", "world")
+        transformation("laser", "body")
+        transformation("body", "odometry")
 
         align_port("lidar_samples", 0.2)
     end
