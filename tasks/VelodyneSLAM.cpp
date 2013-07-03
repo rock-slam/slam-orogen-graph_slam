@@ -42,6 +42,12 @@ void VelodyneSLAM::lidar_samplesTransformerCallback(const base::Time &ts, const 
         std::cerr << "skip, have no body2odometry transformation sample!" << std::endl;
         return;
     }
+
+    // TODO the covariance is not handled by the transformer. this should by a temporary solution
+    current_position_cov += odometry_position_cov;
+    current_orientation_cov += odometry_orientation_cov;
+    body2odometry.cov_position = current_position_cov;
+    body2odometry.cov_orientation = current_orientation_cov;
     
     if(body2odometry.hasValidPosition() && body2odometry.hasValidOrientation())
     {
@@ -104,8 +110,10 @@ bool VelodyneSLAM::configureHook()
     last_envire_update.microseconds = 0;
     // set map offset to zero
     last_odometry_sample.initUnknown();
-    current_odometry_sample.initUnknown();
-    current_odometry_sample.cov_position = Eigen::Matrix3d::Identity();
+    current_position_cov = Eigen::Matrix3d::Zero();
+    current_orientation_cov = Eigen::Matrix3d::Zero();
+    odometry_position_cov = 0.0003 * Eigen::Matrix3d::Identity();
+    odometry_orientation_cov = 0.00000001 * Eigen::Matrix3d::Identity();
     env.reset(new envire::Environment());
     use_mls = _use_mls;
     
