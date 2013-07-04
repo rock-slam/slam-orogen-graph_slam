@@ -31,13 +31,13 @@ void VelodyneSLAM::lidar_samplesTransformerCallback(const base::Time &ts, const 
 {
     // get transformation
     Eigen::Affine3d laser2body;
-    if (!_laser2body.get(ts, laser2body))
+    if (!_laser2body.get(lidar_sample.time, laser2body))
     {
         std::cerr << "skip, have no laser2body transformation sample!" << std::endl;
         return;
     }
     base::samples::RigidBodyState body2odometry;
-    if (!_body2odometry.get(ts, body2odometry, true))
+    if (!_body2odometry.get(lidar_sample.time, body2odometry, true))
     {
         std::cerr << "skip, have no body2odometry transformation sample!" << std::endl;
         return;
