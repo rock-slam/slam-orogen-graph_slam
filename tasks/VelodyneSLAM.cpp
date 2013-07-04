@@ -80,6 +80,9 @@ void VelodyneSLAM::lidar_samplesTransformerCallback(const base::Time &ts, const 
                         throw std::runtime_error("can't update envire transformations for one or more vertecies");
                     if(use_mls)
                         projection->updateAll();
+                    
+                    // find new edges
+                    optimizer.findNewEdgesForLastN(5);
                 }
                 else
                 {
