@@ -36,68 +36,59 @@ void VelodyneSLAM::lidar_samplesTransformerCallback(const base::Time &ts, const 
         std::cerr << "skip, have no laser2body transformation sample!" << std::endl;
         return;
     }
-    base::samples::RigidBodyState body2odometry;
+    envire::TransformWithUncertainty body2odometry;
     if (!_body2odometry.get(lidar_sample.time, body2odometry, true))
     {
         std::cerr << "skip, have no body2odometry transformation sample!" << std::endl;
         return;
     }
 
-    // TODO the covariance is not handled by the transformer. this should by a temporary solution
-    current_position_cov += odometry_position_cov;
-    current_orientation_cov += odometry_orientation_cov;
-    body2odometry.cov_position = current_position_cov;
-    body2odometry.cov_orientation = current_orientation_cov;
-    
-    if(body2odometry.hasValidPosition() && body2odometry.hasValidOrientation())
+    Eigen::Affine3d odometry_delta = last_odometry_transformation.getTransform().inverse() * body2odometry.getTransform();
+    if(odometry_delta.translation().norm() > _vertex_distance.get() || optimizer.vertices().size() == 0)
     {
-        Eigen::Affine3d odometry_delta = last_odometry_sample.getTransform().inverse() * body2odometry.getTransform();
-        if(odometry_delta.translation().norm() > _vertex_distance.get() || optimizer.vertices().size() == 0)
+        // add point cloud to envire
+        envire::Pointcloud* envire_pointcloud = new envire::Pointcloud();
+        envire::FrameNode* frame = new envire::FrameNode();
+        env->addChild(env->getRootNode(), frame);
+        env->setFrameNode(envire_pointcloud, frame);
+        if(use_mls)
+            env->addInput(projection.get(), envire_pointcloud);
+        
+        try
         {
-            // add point cloud to envire
-            envire::Pointcloud* envire_pointcloud = new envire::Pointcloud();
-            envire::FrameNode* frame = new envire::FrameNode();
-            env->addChild(env->getRootNode(), frame);
-            env->setFrameNode(envire_pointcloud, frame);
-            if(use_mls)
-                env->addInput(projection.get(), envire_pointcloud);
+            // add new vertex to graph
+            velodyne_lidar::ConvertHelper::convertScanToPointCloud(lidar_sample, envire_pointcloud->vertices, laser2body);
+            if(!optimizer.addVertex(body2odometry, envire_pointcloud))
+                throw std::runtime_error("failed to add a new vertex");
             
-            try
-            {
-                // add new vertex to graph
-                velodyne_lidar::ConvertHelper::convertScanToPointCloud(lidar_sample, envire_pointcloud->vertices, laser2body);
-                if(!optimizer.addVertex(body2odometry, envire_pointcloud))
-                    throw std::runtime_error("failed to add a new vertex");
+            // run optimization
+            if(optimizer.vertices().size() % 5 == 0)
+            {             
+                // find new edges
+                optimizer.findNewEdgesForLastN(5);
                 
-                // run optimization
-                if(optimizer.vertices().size() % 5 == 0)
-                {
-                    if(optimizer.optimize(5) < 1)
-                        throw std::runtime_error("optimization failed");
-                    
-                    // update envire
-                    if(!optimizer.updateEnvireTransformations())
-                        throw std::runtime_error("can't update envire transformations for one or more vertecies");
-                    if(use_mls)
-                        projection->updateAll();
-                    
-                    // find new edges
-                    optimizer.findNewEdgesForLastN(5);
-                }
-                else
-                {
-                    // update envire
-                    if(!optimizer.updateEnvireTransformations())
-                        throw std::runtime_error("can't update envire transformations for one or more vertecies");
-                }
+                if(optimizer.optimize(5) < 1)
+                    throw std::runtime_error("optimization failed");
+                
+                // update envire
+                if(!optimizer.updateEnvireTransformations())
+                    throw std::runtime_error("can't update envire transformations for one or more vertecies");
+                if(use_mls)
+                    projection->updateAll();
             }
-            catch(std::runtime_error e)
+            else
             {
-                std::cerr << "Exception while handling lidar sample: " << e.what() << std::endl;
+                // update envire
+                if(!optimizer.updateEnvireTransformations())
+                    throw std::runtime_error("can't update envire transformations for one or more vertecies");
             }
-            
-            last_odometry_sample = body2odometry;
         }
+        catch(std::runtime_error e)
+        {
+            std::cerr << "Exception while handling lidar sample: " << e.what() << std::endl;
+        }
+        
+        last_odometry_transformation = body2odometry;
     }
 }
 
@@ -111,12 +102,7 @@ bool VelodyneSLAM::configureHook()
         return false;
     
     last_envire_update.microseconds = 0;
-    // set map offset to zero
-    last_odometry_sample.initUnknown();
-    current_position_cov = Eigen::Matrix3d::Zero();
-    current_orientation_cov = Eigen::Matrix3d::Zero();
-    odometry_position_cov = 0.0003 * Eigen::Matrix3d::Identity();
-    odometry_orientation_cov = 0.00000001 * Eigen::Matrix3d::Identity();
+    last_odometry_transformation = envire::TransformWithUncertainty::Identity();
     env.reset(new envire::Environment());
     use_mls = _use_mls;
     

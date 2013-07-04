@@ -35,12 +35,8 @@ namespace graph_slam {
         boost::shared_ptr<envire::OrocosEmitter> orocos_emitter;
         boost::shared_ptr<envire::MLSProjection> projection;
         base::Time last_envire_update;
-        base::samples::RigidBodyState last_odometry_sample;
+        envire::TransformWithUncertainty last_odometry_transformation;
         graph_slam::ExtendedSparseOptimizer optimizer;
-        Eigen::Matrix3d odometry_position_cov;
-        Eigen::Matrix3d odometry_orientation_cov;
-        Eigen::Matrix3d current_position_cov;
-        Eigen::Matrix3d current_orientation_cov;
         bool use_mls;
         
 
