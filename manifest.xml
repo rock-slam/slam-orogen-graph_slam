@@ -9,4 +9,5 @@
     <depend package="drivers/orogen/transformer"/>
     <depend package="image_processing/orogen/stereo"/>
     <depend package="gui/vizkit"/>
+    <depend package="drivers/velodyne_lidar"/>
 </package>
