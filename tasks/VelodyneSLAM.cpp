@@ -118,13 +118,9 @@ bool VelodyneSLAM::configureHook()
     if(use_mls)
     {
         // setup envire mls grid
-        double grid_size_x = 50;
-        double grid_size_y = 50;
-        double cell_resolution_x = 0.075;
-        double cell_resolution_y = 0.075;
-        double grid_count_x = grid_size_x / cell_resolution_x;
-        double grid_count_y = grid_size_y / cell_resolution_y;
-        envire::MultiLevelSurfaceGrid* mls = new envire::MultiLevelSurfaceGrid(grid_count_y, grid_count_x, cell_resolution_x, cell_resolution_y, -0.5 * grid_size_x, -0.5 * grid_size_y);
+        double grid_count_x = _grid_size_x / _cell_resolution_x;
+        double grid_count_y = _grid_size_y / _cell_resolution_y;
+        envire::MultiLevelSurfaceGrid* mls = new envire::MultiLevelSurfaceGrid(grid_count_y, grid_count_x, _cell_resolution_x, _cell_resolution_y, -0.5 * _grid_size_x, -0.5 * _grid_size_y);
         projection.reset(new envire::MLSProjection());
         
         env->attachItem(mls);

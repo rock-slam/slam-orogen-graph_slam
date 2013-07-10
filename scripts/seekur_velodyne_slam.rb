@@ -27,6 +27,10 @@ Orocos.run "graph_slam::VelodyneSLAM" => "velodyne_slam" do
     velodyne_slam.envire_period = 1.0
     velodyne_slam.vertex_distance = 0.5
     velodyne_slam.use_mls = false
+    velodyne_slam.grid_size_x = 100
+    velodyne_slam.grid_size_y = 100
+    velodyne_slam.cell_resolution_x = 0.1
+    velodyne_slam.cell_resolution_y = 0.1
 
     log.velodyne.laser_scans.connect_to velodyne_slam.lidar_samples, :type => :buffer, :size => 100
 

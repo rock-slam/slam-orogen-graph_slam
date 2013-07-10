@@ -68,6 +68,14 @@ task_context "VelodyneSLAM" do
         doc 'if this property is set, the final environment will be written to the given file path.'
     property('use_mls', 'bool', false).
         doc 'show a MLS map in envire.'
+    property('grid_size_x', 'double', 50.0).
+        doc 'x size of the grid in meter'
+    property('grid_size_y', 'double', 50.0).
+        doc 'y size of the grid in meter'
+    property('cell_resolution_x', 'double', 0.1).
+        doc 'x cell resolution in meter'
+    property('cell_resolution_y', 'double', 0.1).
+        doc 'y cell resolution in meter'
 
     ## input ports
     input_port('lidar_samples', '/velodyne_lidar/MultilevelLaserScan').
