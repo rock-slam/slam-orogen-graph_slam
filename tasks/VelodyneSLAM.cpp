@@ -155,6 +155,15 @@ void VelodyneSLAM::updateHook()
     
     VelodyneSLAMBase::updateHook();
     
+    // write adjusted odometry pose
+    base::samples::RigidBodyState odometry_pose;
+    if(_odometry_samples.read(odometry_pose) == RTT::NewData) 
+    {
+        base::samples::RigidBodyState adjusted_odometry_pose;
+        if(optimizer.adjustOdometryPose(odometry_pose, adjusted_odometry_pose))
+            _pose_samples.write(adjusted_odometry_pose);
+    }
+    
     if( orocos_emitter.use_count() > 0 )
     {
         if( _envire_map.connected() )

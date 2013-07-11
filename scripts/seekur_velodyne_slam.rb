@@ -33,6 +33,7 @@ Orocos.run "graph_slam::VelodyneSLAM" => "velodyne_slam" do
     velodyne_slam.cell_resolution_y = 0.1
 
     log.velodyne.laser_scans.connect_to velodyne_slam.lidar_samples, :type => :buffer, :size => 100
+    log.odometry.odometry_samples.connect_to velodyne_slam.odometry_samples
 
     Orocos.transformer.setup(velodyne_slam)
 
@@ -43,11 +44,14 @@ Orocos.run "graph_slam::VelodyneSLAM" => "velodyne_slam" do
     view3d = Vizkit.vizkit3d_widget
     view3d.show
     envireviz = Vizkit.default_loader.EnvireVisualization
+    bodystateviz = Vizkit.default_loader.RigidBodyStateVisualization
     Vizkit.connect_port_to 'velodyne_slam', 'envire_map', :pull => false, :update_frequency => 33 do |sample, name|
         envireviz.updateBinaryEvents(sample)
     end
+    Vizkit.connect_port_to 'velodyne_slam', 'pose_samples', :pull => false, :update_frequency => 33 do |sample, name|
+        bodystateviz.updateRigidBodyState(sample)
+    end
     
-    #Vizkit.display log.velodyne.laser_scans
     Vizkit.display velodyne_slam
     begin
         Vizkit.exec

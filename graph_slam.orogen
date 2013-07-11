@@ -82,6 +82,10 @@ task_context "VelodyneSLAM" do
         needs_reliable_connection.
         doc 'timestamped 3d laser scans'
         
+    input_port('odometry_samples', '/base/samples/RigidBodyState').
+        needs_reliable_connection.
+        doc 'odometry samples'
+        
     ## output ports
     output_port('pose_samples', '/base/samples/RigidBodyState').
         doc 'timestamped samples of the current pose of the robot.'
