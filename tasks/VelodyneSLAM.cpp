@@ -110,6 +110,7 @@ bool VelodyneSLAM::configureHook()
     
     // set gicp config
     graph_slam::GICPConfiguration gicp_config;
+    gicp_config.max_sensor_distance = 1.5;
     optimizer.updateGICPConfiguration(gicp_config);
     
     // enable debug output
