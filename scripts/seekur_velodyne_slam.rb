@@ -7,16 +7,41 @@ include Orocos
 Orocos::CORBA.max_message_size = 80000000
 
 if not ARGV[0]
-    puts "add a valid logfile as parameter"
+    puts "add a valid logfile folder as parameter"
     exit
 end
 
 log = Orocos::Log::Replay.open(ARGV)
 log.use_sample_time = true
-Vizkit.control log
 
 Orocos.initialize
-Orocos.transformer.load_conf(File.join(File.dirname(__FILE__),"seekur_transforms.rb"))
+
+# find ports
+velodyne_ports = log.find_all_output_ports("/velodyne_lidar/MultilevelLaserScan", "laser_scans")
+task_states = log.find_all_output_ports("/int32_t", "state")
+if log.has_task?("odometry") then
+    odometry_port = log.find_all_output_ports("/base/samples/RigidBodyState_m", "odometry_samples")
+    Orocos.transformer.load_conf(File.join(File.dirname(__FILE__),"seekur_transforms.rb"))
+elsif log.has_task?("seekur_drv") then
+    odometry_port = log.find_all_output_ports("/base/samples/RigidBodyState_m", "robot_pose")
+    Orocos.transformer.load_conf(File.join(File.dirname(__FILE__),"seekur_sand_track_transforms.rb"))
+else
+    puts "could not find odometry samples"
+    exit
+end
+
+# track only needed ports
+log.transformer_broadcaster.track(true)
+velodyne_ports.each do |port|
+    port.tracked = true
+end
+odometry_port.each do |port|
+    port.tracked = true
+end
+# have to track all states, this seems to be a bug
+task_states.each do |port|
+    port.tracked = true
+end
 
 Orocos.run "graph_slam::VelodyneSLAM" => "velodyne_slam" do
 
@@ -32,8 +57,21 @@ Orocos.run "graph_slam::VelodyneSLAM" => "velodyne_slam" do
     velodyne_slam.cell_resolution_x = 0.1
     velodyne_slam.cell_resolution_y = 0.1
 
-    log.velodyne.laser_scans.connect_to velodyne_slam.lidar_samples, :type => :buffer, :size => 100
-    log.odometry.odometry_samples.connect_to velodyne_slam.odometry_samples
+    # connect ports with the task
+    velodyne_ports.each do |port|
+        port.connect_to velodyne_slam.lidar_samples, :type => :buffer, :size => 100
+    end
+    odometry_port.each do |port|
+        port.connect_to velodyne_slam.odometry_samples
+        # frame names are not set in the seekur_drv deployment
+        if log.has_task?("seekur_drv") then
+            port.filter = Proc.new do |frame|
+                frame.sourceFrame = 'body'
+                frame.targetFrame = 'odometry'
+                frame
+            end
+        end
+    end
 
     Orocos.transformer.setup(velodyne_slam)
 
@@ -52,6 +90,7 @@ Orocos.run "graph_slam::VelodyneSLAM" => "velodyne_slam" do
         bodystateviz.updateRigidBodyState(sample)
     end
     
+    Vizkit.control log
     Vizkit.display velodyne_slam
     begin
         Vizkit.exec
