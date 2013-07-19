@@ -42,6 +42,9 @@ void VelodyneSLAM::lidar_samplesTransformerCallback(const base::Time &ts, const 
         std::cerr << "skip, have no body2odometry transformation sample!" << std::endl;
         return;
     }
+    
+    // reset number of edge candidates handled in the update hook
+    try_edges_on_update = 1;
 
     Eigen::Affine3d odometry_delta = last_odometry_transformation.getTransform().inverse() * body2odometry.getTransform();
     if(odometry_delta.translation().norm() > _vertex_distance.get() || optimizer.vertices().size() == 0)
@@ -64,12 +67,11 @@ void VelodyneSLAM::lidar_samplesTransformerCallback(const base::Time &ts, const 
             // run optimization
             if(optimizer.vertices().size() % 5 == 0)
             {             
-                // find new edges
-                optimizer.findNewEdgesForLastN(5);
-                
                 if(optimizer.optimize(5) < 1)
                     throw std::runtime_error("optimization failed");
                 
+                // find new edges
+                optimizer.findEdgeCandidates();
                 // update envire
                 if(!optimizer.updateEnvireTransformations())
                     throw std::runtime_error("can't update envire transformations for one or more vertecies");
@@ -101,6 +103,7 @@ bool VelodyneSLAM::configureHook()
     if (! VelodyneSLAMBase::configureHook())
         return false;
     
+    try_edges_on_update = 0;
     last_envire_update.microseconds = 0;
     last_odometry_transformation = envire::TransformWithUncertainty::Identity();
     env.reset(new envire::Environment());
@@ -165,6 +168,7 @@ void VelodyneSLAM::updateHook()
             _pose_samples.write(adjusted_odometry_pose);
     }
     
+    // write envire updates
     if( orocos_emitter.use_count() > 0 )
     {
         if( _envire_map.connected() )
@@ -179,6 +183,13 @@ void VelodyneSLAM::updateHook()
         {
             orocos_emitter.reset();
         }
+    }
+    
+    // create new edges
+    if(try_edges_on_update > 0)
+    {
+        optimizer.tryBestEdgeCandidate();
+        try_edges_on_update--;
     }
 }
 void VelodyneSLAM::errorHook()

@@ -38,7 +38,8 @@ namespace graph_slam {
         envire::TransformWithUncertainty last_odometry_transformation;
         graph_slam::ExtendedSparseOptimizer optimizer;
         bool use_mls;
-        
+        int try_edges_on_update;
+
 
         virtual void lidar_samplesTransformerCallback(const base::Time &ts, const ::velodyne_lidar::MultilevelLaserScan &lidar_samples_sample);
 
