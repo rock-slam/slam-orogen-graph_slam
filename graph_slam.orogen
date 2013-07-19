@@ -56,6 +56,13 @@ end
 task_context "VelodyneSLAM" do
     needs_configuration
     
+    ## point cloud filter parameter
+    property('maximum_angle_to_neighbor', 'double', 2.53).
+        doc('valid neigbors have an angle not greater than this value.').
+        doc('the angle is always defined from the origin to the more distant point.')
+    property('minimum_valid_neighbors', 'int', 2).
+        doc('minimum amount of valid neigbors')
+    
     ## slam configuration
     property('vertex_distance', 'double', 0.5).
         doc 'the translation after a new laser scan is added to the graph'

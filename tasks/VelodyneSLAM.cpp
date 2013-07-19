@@ -64,8 +64,13 @@ void VelodyneSLAM::lidar_samplesTransformerCallback(const base::Time &ts, const 
         
         try
         {
+            // filter point cloud
+            velodyne_lidar::MultilevelLaserScan filtered_lidar_sample;
+            velodyne_lidar::ConvertHelper::filterOutliers(lidar_sample, filtered_lidar_sample, _maximum_angle_to_neighbor, _minimum_valid_neighbors);
+            
             // add new vertex to graph
-            velodyne_lidar::ConvertHelper::convertScanToPointCloud(lidar_sample, envire_pointcloud->vertices, laser2body);
+            velodyne_lidar::ConvertHelper::convertScanToPointCloud(filtered_lidar_sample, envire_pointcloud->vertices, laser2body);
+            
             if(!optimizer.addVertex(body2odometry, envire_pointcloud))
                 throw std::runtime_error("failed to add a new vertex");
             
