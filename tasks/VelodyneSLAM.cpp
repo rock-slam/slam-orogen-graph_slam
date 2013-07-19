@@ -9,6 +9,7 @@
 #include <velodyne_lidar/pointcloudConvertHelper.hpp>
 #include <envire/maps/Pointcloud.hpp>
 #include <envire/maps/MLSGrid.hpp>
+#include <graph_slam/matrix_helper.hpp>
 
 
 using namespace graph_slam;
@@ -42,6 +43,10 @@ void VelodyneSLAM::lidar_samplesTransformerCallback(const base::Time &ts, const 
         std::cerr << "skip, have no body2odometry transformation sample!" << std::endl;
         return;
     }
+    
+    // set a odometry covariance if it is nan
+    if(is_nan(body2odometry.getCovariance()))
+        body2odometry.setCovariance(100 * envire::TransformWithUncertainty::Covariance::Identity());
     
     // reset number of edge candidates handled in the update hook
     try_edges_on_update = 1;
