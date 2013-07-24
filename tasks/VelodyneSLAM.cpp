@@ -118,6 +118,7 @@ bool VelodyneSLAM::configureHook()
     last_odometry_transformation = envire::TransformWithUncertainty::Identity();
     env.reset(new envire::Environment());
     use_mls = _use_mls;
+    event_filter.reset(new MLSGridEventFilter());
     
     g2o::OptimizableGraph::initMultiThreading();
     
@@ -165,6 +166,8 @@ void VelodyneSLAM::updateHook()
         orocos_emitter->useContextUpdates( env.get() );
         orocos_emitter->useEventQueue( true );
         orocos_emitter->attach( env.get() );
+        if(_use_mls)
+            orocos_emitter->setFilter(event_filter.get());
     }
     
     VelodyneSLAMBase::updateHook();

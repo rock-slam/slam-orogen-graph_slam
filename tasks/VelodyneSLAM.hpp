@@ -8,10 +8,26 @@
 #include <envire/Orocos.hpp>
 #include <envire/core/Environment.hpp>
 #include <envire/operators/MLSProjection.hpp>
+#include <envire/core/EventHandler.hpp>
 #include <boost/shared_ptr.hpp>
 #include <graph_slam/extended_sparse_optimizer.hpp>
 
 namespace graph_slam {
+    
+    class MLSGridEventFilter : public envire::EventFilter
+    {
+    public:
+        MLSGridEventFilter() : EventFilter() {}
+        virtual bool filter( envire::Event const& event )
+        {
+            envire::MultiLevelSurfaceGrid* mls_grid = dynamic_cast<envire::MultiLevelSurfaceGrid*>(event.a.get());
+            if((event.type == envire::event::ITEM || event.type == envire::event::FRAMENODE) && mls_grid)
+            {
+                return true;
+            }
+            return false;
+        }
+    };
 
     /*! \class VelodyneSLAM 
      * \brief The task context provides and requires services. It uses an ExecutionEngine to perform its functions.
@@ -34,6 +50,7 @@ namespace graph_slam {
         boost::shared_ptr<envire::Environment> env;
         boost::shared_ptr<envire::OrocosEmitter> orocos_emitter;
         boost::shared_ptr<envire::MLSProjection> projection;
+        boost::shared_ptr<MLSGridEventFilter> event_filter;
         base::Time last_envire_update;
         envire::TransformWithUncertainty last_odometry_transformation;
         graph_slam::ExtendedSparseOptimizer optimizer;
