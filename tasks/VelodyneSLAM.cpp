@@ -28,17 +28,17 @@ VelodyneSLAM::~VelodyneSLAM()
 {
 }
 
-void VelodyneSLAM::lidar_samplesTransformerCallback(const base::Time &ts, const ::velodyne_lidar::MultilevelLaserScan &lidar_sample)
-{
+void VelodyneSLAM::handleLidarData(const base::Time &ts, bool use_simulated_data)
+{    
     // get transformation
     Eigen::Affine3d laser2body;
-    if (!_laser2body.get(lidar_sample.time, laser2body))
+    if (!_laser2body.get(ts, laser2body))
     {
         std::cerr << "skip, have no laser2body transformation sample!" << std::endl;
         return;
     }
     envire::TransformWithUncertainty body2odometry;
-    if (!_body2odometry.get(lidar_sample.time, body2odometry, true))
+    if (!_body2odometry.get(ts, body2odometry, true))
     {
         std::cerr << "skip, have no body2odometry transformation sample!" << std::endl;
         return;
@@ -64,13 +64,26 @@ void VelodyneSLAM::lidar_samplesTransformerCallback(const base::Time &ts, const 
         
         try
         {
-            // filter point cloud
-            velodyne_lidar::MultilevelLaserScan filtered_lidar_sample;
-            velodyne_lidar::ConvertHelper::filterOutliers(lidar_sample, filtered_lidar_sample, _maximum_angle_to_neighbor, _minimum_valid_neighbors);
+            // fill envire pointcloud
+            if(use_simulated_data)
+            {
+                // transform pointcloud to body frame
+                for(std::vector<base::Vector3d>::const_iterator it = new_simulated_pointcloud_sample->points.begin(); it != new_simulated_pointcloud_sample->points.end(); it++)
+                {
+                    envire_pointcloud->vertices.push_back(laser2body * (*it));
+                }
+            }
+            else
+            {
+                // filter point cloud
+                velodyne_lidar::MultilevelLaserScan filtered_lidar_sample;
+                velodyne_lidar::ConvertHelper::filterOutliers(*new_lidar_sample, filtered_lidar_sample, _maximum_angle_to_neighbor, _minimum_valid_neighbors);
+                
+                // add new vertex to graph
+                velodyne_lidar::ConvertHelper::convertScanToPointCloud(filtered_lidar_sample, envire_pointcloud->vertices, laser2body);
+            }
             
-            // add new vertex to graph
-            velodyne_lidar::ConvertHelper::convertScanToPointCloud(filtered_lidar_sample, envire_pointcloud->vertices, laser2body);
-            
+            // add new vertex
             if(!optimizer.addVertex(body2odometry, envire_pointcloud))
                 throw std::runtime_error("failed to add a new vertex");
             
@@ -104,6 +117,20 @@ void VelodyneSLAM::lidar_samplesTransformerCallback(const base::Time &ts, const 
     }
 }
 
+void VelodyneSLAM::lidar_samplesTransformerCallback(const base::Time &ts, const ::velodyne_lidar::MultilevelLaserScan &lidar_sample)
+{
+    new_lidar_sample = &lidar_sample;
+    handleLidarData(lidar_sample.time, false);
+    new_lidar_sample = NULL;
+}
+
+void VelodyneSLAM::simulated_pointcloudTransformerCallback(const base::Time& ts, const base::samples::Pointcloud& simulated_pointcloud_sample)
+{
+    new_simulated_pointcloud_sample = &simulated_pointcloud_sample;
+    handleLidarData(simulated_pointcloud_sample.time, true);
+    new_simulated_pointcloud_sample = NULL;
+}
+
 /// The following lines are template definitions for the various state machine
 // hooks defined by Orocos::RTT. See VelodyneSLAM.hpp for more detailed
 // documentation about them.
@@ -119,6 +146,8 @@ bool VelodyneSLAM::configureHook()
     env.reset(new envire::Environment());
     use_mls = _use_mls;
     event_filter.reset(new MLSGridEventFilter());
+    new_lidar_sample = NULL;
+    new_simulated_pointcloud_sample = NULL;
     
     g2o::OptimizableGraph::initMultiThreading();
     
@@ -174,7 +203,7 @@ void VelodyneSLAM::updateHook()
     
     // write adjusted odometry pose
     base::samples::RigidBodyState odometry_pose;
-    if(_odometry_samples.read(odometry_pose) == RTT::NewData) 
+    if(_odometry_samples.readNewest(odometry_pose) == RTT::NewData) 
     {
         base::samples::RigidBodyState adjusted_odometry_pose;
         if(optimizer.adjustOdometryPose(odometry_pose, adjusted_odometry_pose))

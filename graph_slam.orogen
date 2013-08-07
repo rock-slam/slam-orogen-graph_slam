@@ -89,6 +89,10 @@ task_context "VelodyneSLAM" do
         needs_reliable_connection.
         doc 'timestamped 3d laser scans'
         
+    input_port('simulated_pointcloud', '/base/samples/Pointcloud').
+        needs_reliable_connection.
+        doc 'simulated pointcloud data'
+        
     input_port('odometry_samples', '/base/samples/RigidBodyState').
         needs_reliable_connection.
         doc 'odometry samples'
@@ -106,7 +110,8 @@ task_context "VelodyneSLAM" do
         transformation("laser", "body")
         transformation("body", "odometry")
 
-        align_port("lidar_samples", 0.2)
+        align_port("lidar_samples", 0.1)
+        align_port("simulated_pointcloud", 0.1)
     end
     
     port_driven
