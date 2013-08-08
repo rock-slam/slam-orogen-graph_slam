@@ -1,0 +1,37 @@
+--- name:default
+# the global name that should be used for the internal body frame
+body_frame: body
+# x cell resolution in meter
+cell_resolution_x: 0.1
+# y cell resolution in meter
+cell_resolution_y: 0.1
+# update period in s for the envire_map port.
+envire_period: 1.0
+# if this property is set, the final environment will be written to the given file path.
+environment_debug_path: ""
+# x size of the grid in meter
+grid_size_x: 50.0
+# y size of the grid in meter
+grid_size_y: 50.0
+# the global name that should be used for the internal laser frame
+laser_frame: laser
+# Time in s between lidar_samples readings
+lidar_samples_period: 0.1
+# the angle is always defined from the origin to the more distant point.
+maximum_angle_to_neighbor: 2.53
+# minimum amount of valid neigbors
+minimum_valid_neighbors: 2
+# the global name that should be used for the internal odometry frame
+odometry_frame: odometry
+# Time in s between simulated_pointcloud readings
+simulated_pointcloud_period: 0.1
+# list of static transformations
+static_transformations: []
+# Maximum time in seconds the transformer will wait until it starts dropping samples
+transformer_max_latency: 0.5
+# Minimum system time in seconds between two updates of the status ports
+transformer_status_period: 1.0
+# show a MLS map in envire.
+use_mls: false
+# the translation after a new laser scan is added to the graph
+vertex_distance: 0.5

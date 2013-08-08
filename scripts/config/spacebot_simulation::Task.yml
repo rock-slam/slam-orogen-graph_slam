@@ -1,0 +1,16 @@
+--- name:default
+# no documentation available for this property
+add_floor: false
+# the full path to the main configuration folder
+config_dir: <%= "#{ENV['AUTOPROJ_PROJECT_BASE']}/install/configuration/mars_default" %>
+# set the controller port, e.g. 1600 for communication with monster
+controller_port: 0
+# switch to active the distributed simulation if needed
+distributed_simulation: false
+# start the simulation graphical interface with this module
+enable_gui: true
+# the full path to the initial scene, this is needed because operations are not accessible during configuration within syskit (deadlock)
+initial_scene: <%= "#{ENV['AUTOPROJ_PROJECT_BASE']}/install/configuration/mars_scenes/dlr.scn" %>
+# forward the original mars arguments, such as -c 1600 for setting the ode port - option consists of name, here: -c and parameter: here 1600
+raw_options: []
+# Do not use 'show_coordinate_system: true' here, it fails
