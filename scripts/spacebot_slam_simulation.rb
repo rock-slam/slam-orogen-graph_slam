@@ -73,9 +73,6 @@ Orocos.run 'spacebot_simulation', 'graph_slam::VelodyneSLAM' => 'velodyne_slam',
     # MAPPING
     velodyne_slam = TaskContext.get 'velodyne_slam'
     velodyne_slam.apply_conf(['default'])
-    velodyne_slam.transformer_max_latency = 5.0
-    velodyne_slam.simulated_pointcloud_period = 2.5
-    velodyne_slam.lidar_samples_period = 2.5
 
     ## setup transformer broadcaster
     broadcaster = Orocos::TaskContext.get "transformer_broadcaster"

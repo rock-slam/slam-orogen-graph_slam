@@ -30,17 +30,11 @@ VelodyneSLAM::~VelodyneSLAM()
 
 void VelodyneSLAM::handleLidarData(const base::Time &ts, bool use_simulated_data)
 {    
-    // get transformation
+    // get static transformation
     Eigen::Affine3d laser2body;
     if (!_laser2body.get(ts, laser2body))
     {
         std::cerr << "skip, have no laser2body transformation sample!" << std::endl;
-        return;
-    }
-    envire::TransformWithUncertainty body2odometry;
-    if (!_body2odometry.get(ts, body2odometry, true))
-    {
-        std::cerr << "skip, have no body2odometry transformation sample!" << std::endl;
         return;
     }
     
@@ -68,7 +62,7 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, bool use_simulated_data
             if(use_simulated_data)
             {
                 // transform pointcloud to body frame
-                for(std::vector<base::Vector3d>::const_iterator it = new_simulated_pointcloud_sample->points.begin(); it != new_simulated_pointcloud_sample->points.end(); it++)
+                for(std::vector<base::Vector3d>::const_iterator it = new_simulated_pointcloud_sample.points.begin(); it != new_simulated_pointcloud_sample.points.end(); it++)
                 {
                     envire_pointcloud->vertices.push_back(laser2body * (*it));
                 }
@@ -77,7 +71,7 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, bool use_simulated_data
             {
                 // filter point cloud
                 velodyne_lidar::MultilevelLaserScan filtered_lidar_sample;
-                velodyne_lidar::ConvertHelper::filterOutliers(*new_lidar_sample, filtered_lidar_sample, _maximum_angle_to_neighbor, _minimum_valid_neighbors);
+                velodyne_lidar::ConvertHelper::filterOutliers(new_lidar_sample, filtered_lidar_sample, _maximum_angle_to_neighbor, _minimum_valid_neighbors);
                 
                 // add new vertex to graph
                 velodyne_lidar::ConvertHelper::convertScanToPointCloud(filtered_lidar_sample, envire_pointcloud->vertices, laser2body);
@@ -119,16 +113,14 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, bool use_simulated_data
 
 void VelodyneSLAM::lidar_samplesTransformerCallback(const base::Time &ts, const ::velodyne_lidar::MultilevelLaserScan &lidar_sample)
 {
-    new_lidar_sample = &lidar_sample;
+    new_lidar_sample = lidar_sample;
+    // get dynamic transformation
+    if (!_body2odometry.get(ts, body2odometry, true))
+    {
+        std::cerr << "skip, have no body2odometry transformation sample!" << std::endl;
+        return;
+    }
     handleLidarData(lidar_sample.time, false);
-    new_lidar_sample = NULL;
-}
-
-void VelodyneSLAM::simulated_pointcloudTransformerCallback(const base::Time& ts, const base::samples::Pointcloud& simulated_pointcloud_sample)
-{
-    new_simulated_pointcloud_sample = &simulated_pointcloud_sample;
-    handleLidarData(simulated_pointcloud_sample.time, true);
-    new_simulated_pointcloud_sample = NULL;
 }
 
 /// The following lines are template definitions for the various state machine
@@ -146,8 +138,6 @@ bool VelodyneSLAM::configureHook()
     env.reset(new envire::Environment());
     use_mls = _use_mls;
     event_filter.reset(new MLSGridEventFilter());
-    new_lidar_sample = NULL;
-    new_simulated_pointcloud_sample = NULL;
     
     g2o::OptimizableGraph::initMultiThreading();
     
@@ -225,6 +215,14 @@ void VelodyneSLAM::updateHook()
         {
             orocos_emitter.reset();
         }
+    }
+    
+    if(_simulated_pointcloud.read(new_simulated_pointcloud_sample) == RTT::NewData)
+    {
+        body2odometry.setTransform(odometry_pose.getTransform());
+        body2odometry.setCovariance(combineToPoseCovariance(odometry_pose.cov_position, odometry_pose.cov_orientation));
+        if(new_simulated_pointcloud_sample.points.size() > 0)
+            handleLidarData(new_simulated_pointcloud_sample.time, true);
     }
     
     // create new edges

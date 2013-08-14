@@ -23,8 +23,6 @@ maximum_angle_to_neighbor: 2.53
 minimum_valid_neighbors: 2
 # the global name that should be used for the internal odometry frame
 odometry_frame: odometry
-# Time in s between simulated_pointcloud readings
-simulated_pointcloud_period: 0.1
 # list of static transformations
 static_transformations: []
 # Maximum time in seconds the transformer will wait until it starts dropping samples

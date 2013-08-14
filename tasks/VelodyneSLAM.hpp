@@ -56,13 +56,13 @@ namespace graph_slam {
         graph_slam::ExtendedSparseOptimizer optimizer;
         bool use_mls;
         int try_edges_on_update;
-        const velodyne_lidar::MultilevelLaserScan* new_lidar_sample;
-        const base::samples::Pointcloud* new_simulated_pointcloud_sample;
+        velodyne_lidar::MultilevelLaserScan new_lidar_sample;
+        base::samples::Pointcloud new_simulated_pointcloud_sample;
+        envire::TransformWithUncertainty body2odometry;
 
     protected:
         void handleLidarData(const base::Time &ts, bool use_simulated_data);
         virtual void lidar_samplesTransformerCallback(const base::Time &ts, const ::velodyne_lidar::MultilevelLaserScan &lidar_samples_sample);
-        virtual void simulated_pointcloudTransformerCallback(const base::Time &ts, const ::base::samples::Pointcloud &simulated_pointcloud_sample);
 
     public:
         /** TaskContext constructor for VelodyneSLAM
