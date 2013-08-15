@@ -33,3 +33,9 @@ transformer_status_period: 1.0
 use_mls: false
 # the translation after a new laser scan is added to the graph
 vertex_distance: 0.5
+# the maximum distance for the search for new icp based transformations
+max_icp_distance: 3.0
+# the graph will be optimized every n new scans
+run_graph_optimization_counter: 5
+# the maximum fitness score an icp transformation can have to be valid
+max_icp_fitness_score: 5.0

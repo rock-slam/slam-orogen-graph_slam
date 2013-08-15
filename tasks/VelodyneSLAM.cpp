@@ -82,7 +82,7 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, bool use_simulated_data
                 throw std::runtime_error("failed to add a new vertex");
             
             // run optimization
-            if(optimizer.vertices().size() % 5 == 0)
+            if(optimizer.vertices().size() % _run_graph_optimization_counter.get() == 0)
             {             
                 if(optimizer.optimize(5) < 1)
                     throw std::runtime_error("optimization failed");
@@ -143,7 +143,8 @@ bool VelodyneSLAM::configureHook()
     
     // set gicp config
     graph_slam::GICPConfiguration gicp_config;
-    gicp_config.max_sensor_distance = 1.5;
+    gicp_config.max_sensor_distance = _max_icp_distance;
+    gicp_config.max_fitness_score = _max_icp_fitness_score;
     optimizer.updateGICPConfiguration(gicp_config);
     
     // enable debug output
