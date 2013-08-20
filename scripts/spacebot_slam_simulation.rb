@@ -3,7 +3,7 @@ require 'orocos'
 require "transformer/runtime"
 
 include Orocos
-Orocos::CORBA.max_message_size = 8000000
+Orocos::CORBA.max_message_size = 12000000
 
 Orocos.initialize
 Orocos.transformer.load_conf(File.join(File.dirname(__FILE__),"simulation_transforms.rb"))
@@ -27,6 +27,7 @@ Orocos.run 'spacebot_simulation', 'graph_slam::VelodyneSLAM' => 'velodyne_slam',
     simulation.start
     # Has to be called after configure.
     simulation.loadScene("#{ENV['AUTOPROJ_PROJECT_BASE']}/install/configuration/mars_scenes/spaceBot.scn")
+    simulation.loadScene("#{ENV['AUTOPROJ_PROJECT_BASE']}/install/configuration/mars_scenes/hall.scn")
     
     # ACTUATORS
     locomotion_actuators_names = ["rear_left", "rear_left_turn", "middle_left", "middle_left_turn", "front_right", "front_right_turn", 
