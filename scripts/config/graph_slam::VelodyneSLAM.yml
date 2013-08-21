@@ -38,4 +38,4 @@ max_icp_distance: 3.0
 # the graph will be optimized every n new scans
 run_graph_optimization_counter: 5
 # the maximum fitness score an icp transformation can have to be valid
-max_icp_fitness_score: 5.0
+max_icp_fitness_score: 1.0
