@@ -6,8 +6,6 @@
 #include "graph_slam/VelodyneSLAMBase.hpp"
 
 #include <envire/Orocos.hpp>
-#include <envire/core/Environment.hpp>
-#include <envire/operators/MLSProjection.hpp>
 #include <envire/core/EventHandler.hpp>
 #include <boost/shared_ptr.hpp>
 #include <graph_slam/extended_sparse_optimizer.hpp>
@@ -47,14 +45,11 @@ namespace graph_slam {
     {
 	friend class VelodyneSLAMBase;
     protected:
-        boost::shared_ptr<envire::Environment> env;
         boost::shared_ptr<envire::OrocosEmitter> orocos_emitter;
-        boost::shared_ptr<envire::MLSProjection> projection;
         boost::shared_ptr<MLSGridEventFilter> event_filter;
         base::Time last_envire_update;
         envire::TransformWithUncertainty last_odometry_transformation;
         graph_slam::ExtendedSparseOptimizer optimizer;
-        bool use_mls;
         int try_edges_on_update;
         velodyne_lidar::MultilevelLaserScan new_lidar_sample;
         base::samples::Pointcloud new_simulated_pointcloud_sample;

@@ -7,8 +7,6 @@
 #include <graph_slam/vertex_se3_gicp.hpp>
 #include <graph_slam/edge_se3_gicp.hpp>
 #include <velodyne_lidar/pointcloudConvertHelper.hpp>
-#include <envire/maps/Pointcloud.hpp>
-#include <envire/maps/MLSGrid.hpp>
 #include <graph_slam/matrix_helper.hpp>
 
 
@@ -48,23 +46,16 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, bool use_simulated_data
     Eigen::Affine3d odometry_delta = last_odometry_transformation.getTransform().inverse() * body2odometry.getTransform();
     if(odometry_delta.translation().norm() > _vertex_distance.get() || optimizer.vertices().size() == 0)
     {
-        // add point cloud to envire
-        envire::Pointcloud* envire_pointcloud = new envire::Pointcloud();
-        envire::FrameNode* frame = new envire::FrameNode();
-        env->addChild(env->getRootNode(), frame);
-        env->setFrameNode(envire_pointcloud, frame);
-        if(use_mls)
-            env->addInput(projection.get(), envire_pointcloud);
-        
         try
         {
+            std::vector<Eigen::Vector3d> pointcloud;
             // fill envire pointcloud
             if(use_simulated_data)
             {
                 // transform pointcloud to body frame
                 for(std::vector<base::Vector3d>::const_iterator it = new_simulated_pointcloud_sample.points.begin(); it != new_simulated_pointcloud_sample.points.end(); it++)
                 {
-                    envire_pointcloud->vertices.push_back(laser2body * (*it));
+                    pointcloud.push_back(laser2body * (*it));
                 }
             }
             else
@@ -74,11 +65,11 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, bool use_simulated_data
                 velodyne_lidar::ConvertHelper::filterOutliers(new_lidar_sample, filtered_lidar_sample, _maximum_angle_to_neighbor, _minimum_valid_neighbors);
                 
                 // add new vertex to graph
-                velodyne_lidar::ConvertHelper::convertScanToPointCloud(filtered_lidar_sample, envire_pointcloud->vertices, laser2body);
+                velodyne_lidar::ConvertHelper::convertScanToPointCloud(filtered_lidar_sample, pointcloud, laser2body);
             }
             
             // add new vertex
-            if(!optimizer.addVertex(body2odometry, envire_pointcloud))
+            if(!optimizer.addVertex(body2odometry, pointcloud))
                 throw std::runtime_error("failed to add a new vertex");
             
             // run optimization
@@ -89,17 +80,10 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, bool use_simulated_data
                 
                 // find new edges
                 optimizer.findEdgeCandidates();
+                
                 // update envire
-                if(!optimizer.updateEnvireTransformations())
-                    throw std::runtime_error("can't update envire transformations for one or more vertecies");
-                if(use_mls)
-                    projection->updateAll();
-            }
-            else
-            {
-                // update envire
-                if(!optimizer.updateEnvireTransformations())
-                    throw std::runtime_error("can't update envire transformations for one or more vertecies");
+                if(!optimizer.updateEnvire())
+                    throw std::runtime_error("can't update envire transformations and maps for one or more vertecies");
             }
         }
         catch(std::runtime_error e)
@@ -135,8 +119,7 @@ bool VelodyneSLAM::configureHook()
     try_edges_on_update = 0;
     last_envire_update.microseconds = 0;
     last_odometry_transformation = envire::TransformWithUncertainty::Identity();
-    env.reset(new envire::Environment());
-    use_mls = _use_mls;
+    optimizer.setMLSMapConfiguration(_use_mls, _grid_size_x, _grid_size_y, _cell_resolution_x, _cell_resolution_y);
     event_filter.reset(new MLSGridEventFilter());
     
     g2o::OptimizableGraph::initMultiThreading();
@@ -149,21 +132,6 @@ bool VelodyneSLAM::configureHook()
     
     // enable debug output
     optimizer.setVerbose(true);
-    
-    if(use_mls)
-    {
-        // setup envire mls grid
-        double grid_count_x = _grid_size_x / _cell_resolution_x;
-        double grid_count_y = _grid_size_y / _cell_resolution_y;
-        envire::MultiLevelSurfaceGrid* mls = new envire::MultiLevelSurfaceGrid(grid_count_y, grid_count_x, _cell_resolution_x, _cell_resolution_y, -0.5 * _grid_size_x, -0.5 * _grid_size_y);
-        projection.reset(new envire::MLSProjection());
-        
-        env->attachItem(mls);
-        envire::FrameNode *fn = new envire::FrameNode();
-        env->getRootNode()->addChild(fn);
-        mls->setFrameNode(fn);
-        env->addOutput(projection.get(), mls);
-    }
     
     return true;
 }
@@ -182,6 +150,7 @@ void VelodyneSLAM::updateHook()
     {
         // register the binary event dispatcher, 
         // which will write envire data to a port
+        boost::shared_ptr<envire::Environment> env = optimizer.getEnvironment();
         orocos_emitter.reset(new envire::OrocosEmitter( _envire_map ));
         orocos_emitter->useContextUpdates( env.get() );
         orocos_emitter->useEventQueue( true );
@@ -218,6 +187,7 @@ void VelodyneSLAM::updateHook()
         }
     }
     
+    // handle simulated data
     if(_simulated_pointcloud.read(new_simulated_pointcloud_sample) == RTT::NewData)
     {
         body2odometry.setTransform(odometry_pose.getTransform());
@@ -242,7 +212,7 @@ void VelodyneSLAM::stopHook()
     VelodyneSLAMBase::stopHook();
     
     if(_environment_debug_path.get() != "")
-        env->serialize(_environment_debug_path.get());
+        optimizer.getEnvironment()->serialize(_environment_debug_path.get());
     
 }
 void VelodyneSLAM::cleanupHook()
@@ -250,8 +220,6 @@ void VelodyneSLAM::cleanupHook()
     VelodyneSLAMBase::cleanupHook();
     
     orocos_emitter.reset();
-    
-    env.reset();
     
     // freeing the graph memory
     optimizer.clear();
