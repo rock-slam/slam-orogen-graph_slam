@@ -48,8 +48,8 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, bool use_simulated_data
     {
         try
         {
-            std::vector<Eigen::Vector3d> pointcloud;
             // fill envire pointcloud
+            std::vector<Eigen::Vector3d> pointcloud;
             if(use_simulated_data)
             {
                 // transform pointcloud to body frame
@@ -71,20 +71,8 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, bool use_simulated_data
             // add new vertex
             if(!optimizer.addVertex(body2odometry, pointcloud))
                 throw std::runtime_error("failed to add a new vertex");
-            
-            // run optimization
-            if(optimizer.vertices().size() % _run_graph_optimization_counter.get() == 0)
-            {             
-                if(optimizer.optimize(5) < 1)
-                    throw std::runtime_error("optimization failed");
-                
-                // find new edges
-                optimizer.findEdgeCandidates();
-                
-                // update envire
-                if(!optimizer.updateEnvire())
-                    throw std::runtime_error("can't update envire transformations and maps for one or more vertecies");
-            }
+
+            new_vertecies++;
         }
         catch(std::runtime_error e)
         {
@@ -92,6 +80,32 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, bool use_simulated_data
         }
         
         last_odometry_transformation = body2odometry;
+    }
+
+    // optimization
+    unsigned new_edges = optimizer.edges().size() - edge_count;
+    if(new_edges >= _run_graph_optimization_counter)
+    {
+        edge_count = optimizer.edges().size();
+
+        // run graph optimization
+        if(optimizer.optimize(2) < 1)
+            throw std::runtime_error("optimization failed");
+
+        if(new_vertecies >= 5)
+        {
+            new_vertecies = 0;
+
+            // remove old vertecies
+            optimizer.removeVerticesFromGrid();
+            
+            // find new edges
+            optimizer.findEdgeCandidates();
+
+            // update envire
+            if(!optimizer.updateEnvire())
+                throw std::runtime_error("can't update envire transformations and maps for one or more vertecies");
+        }
     }
 }
 
@@ -116,6 +130,8 @@ bool VelodyneSLAM::configureHook()
     if (! VelodyneSLAMBase::configureHook())
         return false;
     
+    new_vertecies = 0;
+    edge_count = 0;
     try_edges_on_update = 0;
     last_envire_update.microseconds = 0;
     last_odometry_transformation = envire::TransformWithUncertainty::Identity();
@@ -132,6 +148,8 @@ bool VelodyneSLAM::configureHook()
     
     // enable debug output
     optimizer.setVerbose(true);
+
+    optimizer.setupMaxVertexGrid(_max_vertices_per_cell, _grid_size_x, _grid_size_y, _vertex_grid_cell_resolution);
     
     return true;
 }
@@ -199,7 +217,7 @@ void VelodyneSLAM::updateHook()
     // create new edges
     if(try_edges_on_update > 0)
     {
-        optimizer.tryBestEdgeCandidate();
+        optimizer.tryBestEdgeCandidates(1);
         try_edges_on_update--;
     }
 }

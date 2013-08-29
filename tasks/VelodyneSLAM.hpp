@@ -50,10 +50,12 @@ namespace graph_slam {
         base::Time last_envire_update;
         envire::TransformWithUncertainty last_odometry_transformation;
         graph_slam::ExtendedSparseOptimizer optimizer;
-        int try_edges_on_update;
+        unsigned try_edges_on_update;
         velodyne_lidar::MultilevelLaserScan new_lidar_sample;
         base::samples::Pointcloud new_simulated_pointcloud_sample;
         envire::TransformWithUncertainty body2odometry;
+        unsigned new_vertecies;
+        unsigned edge_count;
 
     protected:
         void handleLidarData(const base::Time &ts, bool use_simulated_data);

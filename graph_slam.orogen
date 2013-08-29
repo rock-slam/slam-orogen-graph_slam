@@ -72,6 +72,10 @@ task_context "VelodyneSLAM" do
         doc 'the maximum fitness score an icp transformation can have to be valid'
     property('run_graph_optimization_counter', 'int', 5).
         doc 'the graph will be optimized every n new scans'
+    property('vertex_grid_cell_resolution', 'double', 0.5).
+        doc 'cell resolution of the max vertex grid'
+    property('max_vertices_per_cell', 'int', 5).
+        doc 'maximum count of vertices per cell'
     
     ## envire configuration
     property('envire_period', 'double', 1.0).
