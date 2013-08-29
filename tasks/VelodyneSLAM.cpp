@@ -212,8 +212,17 @@ void VelodyneSLAM::stopHook()
     VelodyneSLAMBase::stopHook();
     
     if(_environment_debug_path.get() != "")
+    {
+        // write environment
         optimizer.getEnvironment()->serialize(_environment_debug_path.get());
-    
+
+        // write graph viz
+        std::filebuf fb;
+        fb.open ("graph_viz.dot",std::ios::out);
+        std::ostream os(&fb);
+        optimizer.dumpGraphViz(os);
+        fb.close();
+    }
 }
 void VelodyneSLAM::cleanupHook()
 {
