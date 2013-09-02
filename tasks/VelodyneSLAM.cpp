@@ -206,7 +206,7 @@ void VelodyneSLAM::updateHook()
     }
     
     // handle simulated data
-    if(_simulated_pointcloud.read(new_simulated_pointcloud_sample) == RTT::NewData)
+    if(_simulated_pointcloud.readNewest(new_simulated_pointcloud_sample) == RTT::NewData)
     {
         body2odometry.setTransform(odometry_pose.getTransform());
         body2odometry.setCovariance(combineToPoseCovariance(odometry_pose.cov_position, odometry_pose.cov_orientation));
@@ -236,7 +236,9 @@ void VelodyneSLAM::stopHook()
 
         // write graph viz
         std::filebuf fb;
-        fb.open ("graph_viz.dot",std::ios::out);
+        std::string full_path(_environment_debug_path.get());
+        full_path += "/graph_viz.dot";
+        fb.open (full_path.c_str(),std::ios::out);
         std::ostream os(&fb);
         optimizer.dumpGraphViz(os);
         fb.close();
