@@ -76,7 +76,7 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, bool use_simulated_data
         }
         catch(std::runtime_error e)
         {
-            std::cerr << "Exception while handling lidar sample: " << e.what() << std::endl;
+            std::cerr << "Exception while adding new lidar sample: " << e.what() << std::endl;
         }
         
         last_odometry_transformation = body2odometry;
@@ -88,23 +88,26 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, bool use_simulated_data
     {
         edge_count = optimizer.edges().size();
 
-        // run graph optimization
-        if(optimizer.optimize(2) < 1)
-            throw std::runtime_error("optimization failed");
-
-        if(new_vertecies >= 5)
+        try
         {
-            new_vertecies = 0;
+            // run graph optimization
+            if(optimizer.optimize(2) < 1)
+                throw std::runtime_error("edge optimization failed");
 
-            // remove old vertecies
-            optimizer.removeVerticesFromGrid();
-            
-            // find new edges
-            optimizer.findEdgeCandidates();
+            if(new_vertecies >= 5)
+            {
+                new_vertecies = 0;
 
-            // update envire
-            if(!optimizer.updateEnvire())
-                throw std::runtime_error("can't update envire transformations and maps for one or more vertecies");
+                // remove old vertecies
+                optimizer.removeVerticesFromGrid();
+                
+                // find new edges
+                optimizer.findEdgeCandidates();
+            }
+        }
+        catch(std::runtime_error e)
+        {
+            std::cerr << "Exception while optimizing graph: " << e.what() << std::endl;
         }
     }
 }
@@ -119,6 +122,32 @@ void VelodyneSLAM::lidar_samplesTransformerCallback(const base::Time &ts, const 
         return;
     }
     handleLidarData(lidar_sample.time, false);
+}
+
+bool VelodyneSLAM::generateMap()
+{
+    bool err = false;
+    try
+    {
+        if(optimizer.optimize(5) < 1)
+        {
+            err = true;
+            std::cerr << "optimization failed" << std::endl;
+        }
+        
+        // update envire
+        if(!optimizer.updateEnvire())
+        {
+            err = true;
+            std::cerr << "environment update failed" << std::endl;
+        }
+    }
+    catch(std::runtime_error e)
+    {
+        std::cerr << "Exception while generating MLS map: " << e.what() << std::endl;
+    }
+
+    return !err;
 }
 
 /// The following lines are template definitions for the various state machine

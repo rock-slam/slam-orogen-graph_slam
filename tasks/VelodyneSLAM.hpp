@@ -60,6 +60,7 @@ namespace graph_slam {
     protected:
         void handleLidarData(const base::Time &ts, bool use_simulated_data);
         virtual void lidar_samplesTransformerCallback(const base::Time &ts, const ::velodyne_lidar::MultilevelLaserScan &lidar_samples_sample);
+        virtual bool generateMap();
 
     public:
         /** TaskContext constructor for VelodyneSLAM

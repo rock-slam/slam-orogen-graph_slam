@@ -75,6 +75,12 @@ Orocos.run "graph_slam::VelodyneSLAM" => "velodyne_slam" do
         end
     end
 
+    timer = Qt::Timer.new
+    timer.connect(SIGNAL('timeout()')) do
+        velodyne_slam.generateMap()
+    end
+    timer.start(30000)
+
     Orocos.transformer.setup(velodyne_slam)
 
     velodyne_slam.configure

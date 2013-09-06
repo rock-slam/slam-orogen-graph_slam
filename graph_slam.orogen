@@ -121,6 +121,11 @@ task_context "VelodyneSLAM" do
 
         align_port("lidar_samples", 0.1)
     end
+
+    ## operations
+    operation('generateMap').
+        returns('bool').
+        doc 'generates and updates the environment map'
     
     port_driven
 end
