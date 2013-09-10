@@ -55,6 +55,10 @@ end
 
 task_context "VelodyneSLAM" do
     needs_configuration
+
+    # The target frame in the generated poses. The source frame is the body
+    # frame (as declared in the transformer configuration)
+    property 'world_frame', '/std/string', 'world'
     
     ## point cloud filter parameter
     property('maximum_angle_to_neighbor', 'double', 2.53).

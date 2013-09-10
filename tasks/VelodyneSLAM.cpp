@@ -214,7 +214,11 @@ void VelodyneSLAM::updateHook()
     {
         base::samples::RigidBodyState adjusted_odometry_pose;
         if(optimizer.adjustOdometryPose(odometry_pose, adjusted_odometry_pose))
+        {
+            adjusted_odometry_pose.sourceFrame = _body_frame.get();
+            adjusted_odometry_pose.targetFrame = _world_frame.get();
             _pose_samples.write(adjusted_odometry_pose);
+        }
     }
     
     // write envire updates
