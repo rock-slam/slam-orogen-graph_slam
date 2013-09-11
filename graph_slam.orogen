@@ -96,6 +96,10 @@ task_context "VelodyneSLAM" do
         doc 'x cell resolution in meter'
     property('cell_resolution_y', 'double', 0.1).
         doc 'y cell resolution in meter'
+    property('grid_min_z', 'double', -50.0).
+        doc 'lower z boundary in the mls grid'
+    property('grid_max_z', 'double', 50.0).
+        doc 'upper z boundary in the mls grid'
 
     ## input ports
     input_port('lidar_samples', '/velodyne_lidar/MultilevelLaserScan').

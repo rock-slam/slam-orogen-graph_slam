@@ -164,7 +164,7 @@ bool VelodyneSLAM::configureHook()
     try_edges_on_update = 0;
     last_envire_update.microseconds = 0;
     last_odometry_transformation = envire::TransformWithUncertainty::Identity();
-    optimizer.setMLSMapConfiguration(_use_mls, _grid_size_x, _grid_size_y, _cell_resolution_x, _cell_resolution_y);
+    optimizer.setMLSMapConfiguration(_use_mls, _grid_size_x, _grid_size_y, _cell_resolution_x, _cell_resolution_y, _grid_min_z, _grid_max_z);
     event_filter.reset(new MLSGridEventFilter());
     
     g2o::OptimizableGraph::initMultiThreading();
