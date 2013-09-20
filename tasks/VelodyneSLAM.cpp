@@ -266,6 +266,7 @@ void VelodyneSLAM::stopHook()
     if(_environment_debug_path.get() != "")
     {
         // write environment
+        generateMap();
         optimizer.getEnvironment()->serialize(_environment_debug_path.get());
 
         // write graph viz
