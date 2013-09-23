@@ -212,12 +212,12 @@ void VelodyneSLAM::updateHook()
     base::samples::RigidBodyState odometry_pose;
     if(_odometry_samples.readNewest(odometry_pose) == RTT::NewData) 
     {
-        base::samples::RigidBodyState adjusted_odometry_pose;
+        base::samples::RigidBodyState adjusted_odometry_pose = odometry_pose;
         if(optimizer.adjustOdometryPose(odometry_pose, adjusted_odometry_pose))
         {
             adjusted_odometry_pose.sourceFrame = _body_frame.get();
             adjusted_odometry_pose.targetFrame = _world_frame.get();
-            adjusted_odometry_pose.time = base::Time::now();
+            //adjusted_odometry_pose.time = base::Time::now(); //TODO Problem/remove?
             _pose_samples.write(adjusted_odometry_pose);
         }
     }
