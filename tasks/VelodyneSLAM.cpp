@@ -32,7 +32,7 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, bool use_simulated_data
     Eigen::Affine3d laser2body;
     if (!_laser2body.get(ts, laser2body))
     {
-        std::cerr << "skip, have no laser2body transformation sample!" << std::endl;
+        RTT::log(RTT::Error) << "skip, have no laser2body transformation sample!" << RTT::endlog();
         new_state = MISSING_TRANSFORMATION;
         return;
     }
@@ -77,7 +77,7 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, bool use_simulated_data
         }
         catch(std::runtime_error e)
         {
-            std::cerr << "Exception while adding new lidar sample: " << e.what() << std::endl;
+            RTT::log(RTT::Error) << "Exception while adding new lidar sample: " << e.what() << RTT::endlog();
             new_state = ADD_VERTEX_FAILED;
         }
         
@@ -109,7 +109,7 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, bool use_simulated_data
         }
         catch(std::runtime_error e)
         {
-            std::cerr << "Exception while optimizing graph: " << e.what() << std::endl;
+            RTT::log(RTT::Error) << "Exception while optimizing graph: " << e.what() << RTT::endlog();
             new_state = GRAPH_OPTIMIZATION_FAILED;
         }
     }
@@ -122,7 +122,7 @@ void VelodyneSLAM::lidar_samplesTransformerCallback(const base::Time &ts, const 
     // get dynamic transformation
     if (!_body2odometry.get(ts, body2odometry, true))
     {
-        std::cerr << "skip, have no body2odometry transformation sample!" << std::endl;
+        RTT::log(RTT::Error) << "skip, have no body2odometry transformation sample!" << RTT::endlog();
         new_state = MISSING_TRANSFORMATION;
         return;
     }
@@ -137,7 +137,7 @@ bool VelodyneSLAM::generateMap()
         if(optimizer.optimize(5) < 1)
         {
             err = true;
-            std::cerr << "optimization failed" << std::endl;
+            RTT::log(RTT::Error) << "optimization failed" << RTT::endlog();
             new_state = GRAPH_OPTIMIZATION_FAILED;
         }
         
@@ -145,13 +145,13 @@ bool VelodyneSLAM::generateMap()
         if(!optimizer.updateEnvire())
         {
             err = true;
-            std::cerr << "environment update failed" << std::endl;
+            RTT::log(RTT::Error) << "environment update failed" << RTT::endlog();
             new_state = MAP_GENERATION_FAILED;
         }
     }
     catch(std::runtime_error e)
     {
-        std::cerr << "Exception while generating MLS map: " << e.what() << std::endl;
+        RTT::log(RTT::Error) << "Exception while generating MLS map: " << e.what() << RTT::endlog();
         new_state = MAP_GENERATION_FAILED;
     }
 
