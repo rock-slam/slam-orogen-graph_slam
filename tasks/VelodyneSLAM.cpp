@@ -33,6 +33,7 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, bool use_simulated_data
     if (!_laser2body.get(ts, laser2body))
     {
         std::cerr << "skip, have no laser2body transformation sample!" << std::endl;
+        new_state = MISSING_TRANSFORMATION;
         return;
     }
     
@@ -77,6 +78,7 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, bool use_simulated_data
         catch(std::runtime_error e)
         {
             std::cerr << "Exception while adding new lidar sample: " << e.what() << std::endl;
+            new_state = ADD_VERTEX_FAILED;
         }
         
         last_odometry_transformation = body2odometry;
@@ -108,17 +110,20 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, bool use_simulated_data
         catch(std::runtime_error e)
         {
             std::cerr << "Exception while optimizing graph: " << e.what() << std::endl;
+            new_state = GRAPH_OPTIMIZATION_FAILED;
         }
     }
 }
 
 void VelodyneSLAM::lidar_samplesTransformerCallback(const base::Time &ts, const ::velodyne_lidar::MultilevelLaserScan &lidar_sample)
 {
+    new_state = RUNNING;
     new_lidar_sample = lidar_sample;
     // get dynamic transformation
     if (!_body2odometry.get(ts, body2odometry, true))
     {
         std::cerr << "skip, have no body2odometry transformation sample!" << std::endl;
+        new_state = MISSING_TRANSFORMATION;
         return;
     }
     handleLidarData(lidar_sample.time, false);
@@ -133,6 +138,7 @@ bool VelodyneSLAM::generateMap()
         {
             err = true;
             std::cerr << "optimization failed" << std::endl;
+            new_state = GRAPH_OPTIMIZATION_FAILED;
         }
         
         // update envire
@@ -140,11 +146,13 @@ bool VelodyneSLAM::generateMap()
         {
             err = true;
             std::cerr << "environment update failed" << std::endl;
+            new_state = MAP_GENERATION_FAILED;
         }
     }
     catch(std::runtime_error e)
     {
         std::cerr << "Exception while generating MLS map: " << e.what() << std::endl;
+        new_state = MAP_GENERATION_FAILED;
     }
 
     return !err;
@@ -159,6 +167,8 @@ bool VelodyneSLAM::configureHook()
     if (! VelodyneSLAMBase::configureHook())
         return false;
     
+    last_state = PRE_OPERATIONAL;
+    new_state = RUNNING;
     new_vertecies = 0;
     edge_count = 0;
     try_edges_on_update = 0;
@@ -242,6 +252,7 @@ void VelodyneSLAM::updateHook()
     // handle simulated data
     if(_simulated_pointcloud.readNewest(new_simulated_pointcloud_sample) == RTT::NewData)
     {
+        new_state = RUNNING;
         body2odometry.setTransform(odometry_pose.getTransform());
         body2odometry.setCovariance(combineToPoseCovariance(odometry_pose.cov_position, odometry_pose.cov_orientation));
         if(new_simulated_pointcloud_sample.points.size() > 0)
@@ -253,6 +264,13 @@ void VelodyneSLAM::updateHook()
     {
         optimizer.tryBestEdgeCandidates(1);
         try_edges_on_update--;
+    }
+
+    // write state if it has changed
+    if(last_state != new_state)
+    {
+        last_state = new_state;
+        state(new_state);
     }
 }
 void VelodyneSLAM::errorHook()

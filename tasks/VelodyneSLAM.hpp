@@ -56,6 +56,8 @@ namespace graph_slam {
         envire::TransformWithUncertainty body2odometry;
         unsigned new_vertecies;
         unsigned edge_count;
+        States last_state;
+        States new_state;
 
     protected:
         void handleLidarData(const base::Time &ts, bool use_simulated_data);
