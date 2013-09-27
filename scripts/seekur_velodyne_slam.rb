@@ -49,6 +49,7 @@ Orocos.run "graph_slam::VelodyneSLAM" => "velodyne_slam" do
     
     velodyne_slam = TaskContext.get 'velodyne_slam'
     #velodyne_slam.envire_path = "#{ENV['AUTOPROJ_PROJECT_BASE']}/slam/orogen/graph_slam/env/"
+    velodyne_slam.enable_debug = true
     velodyne_slam.envire_period = 1.0
     velodyne_slam.grid_size_x = 100
     velodyne_slam.grid_size_y = 100
