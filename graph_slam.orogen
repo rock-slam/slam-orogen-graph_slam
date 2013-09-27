@@ -11,6 +11,7 @@ import_types_from 'base'
 import_types_from 'stereo'
 import_types_from 'envire'
 import_types_from 'velodyne_lidar/MultilevelLaserScan.h'
+import_types_from 'GraphSlamDebugTypes.hpp'
 
 task_context "Task" do
 
@@ -119,7 +120,12 @@ task_context "VelodyneSLAM" do
         doc 'timestamped samples of the current pose of the robot.'
     
     output_port('envire_map', ro_ptr('std/vector</envire/BinaryEvent>'))
-    
+
+    ## debug
+    property('enable_debug', 'bool', false).
+        doc 'enables debug output'
+    output_port('debug_information', '/graph_slam/VelodyneSlamDebug')
+
     ## transformer config
     transformer do
         max_latency( 0.5 )

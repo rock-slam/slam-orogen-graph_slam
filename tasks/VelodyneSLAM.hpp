@@ -58,11 +58,13 @@ namespace graph_slam {
         unsigned edge_count;
         States last_state;
         States new_state;
+        VelodyneSlamDebug debug_information;
 
     protected:
         void handleLidarData(const base::Time &ts, bool use_simulated_data);
         virtual void lidar_samplesTransformerCallback(const base::Time &ts, const ::velodyne_lidar::MultilevelLaserScan &lidar_samples_sample);
         virtual bool generateMap();
+        void writeOptimizerDebugInformation();
 
     public:
         /** TaskContext constructor for VelodyneSLAM
