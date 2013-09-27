@@ -336,8 +336,6 @@ void VelodyneSLAM::cleanupHook()
 {
     VelodyneSLAMBase::cleanupHook();
     
-    orocos_emitter.reset();
-    
     // freeing the graph memory
     optimizer.clear();
 
