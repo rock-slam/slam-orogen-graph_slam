@@ -13,12 +13,12 @@
 using namespace graph_slam;
 
 VelodyneSLAM::VelodyneSLAM(std::string const& name)
-    : VelodyneSLAMBase(name)
+    : VelodyneSLAMBase(name), map_updated(false)
 {
 }
 
 VelodyneSLAM::VelodyneSLAM(std::string const& name, RTT::ExecutionEngine* engine)
-    : VelodyneSLAMBase(name, engine)
+    : VelodyneSLAMBase(name, engine), map_updated(false)
 {
 }
 
@@ -140,13 +140,14 @@ bool VelodyneSLAM::generateMap()
         {
             err = true;
             std::cerr << "environment update failed" << std::endl;
+        } else {
+            map_updated = true;
         }
     }
     catch(std::runtime_error e)
     {
         std::cerr << "Exception while generating MLS map: " << e.what() << std::endl;
     }
-
     return !err;
 }
 
@@ -227,9 +228,11 @@ void VelodyneSLAM::updateHook()
     {
         if( _envire_map.connected() )
         {
-            if( (last_envire_update + base::Time::fromSeconds(_envire_period.value())) < base::Time::now() ) 
+            if( (last_envire_update + base::Time::fromSeconds(_envire_period.value())) < base::Time::now() &&
+                    map_updated ) 
             {
                 orocos_emitter->flush();
+                map_updated = false;
                 last_envire_update = base::Time::now();
             }
         }
