@@ -78,7 +78,7 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, bool use_simulated_data
             }
             
             // add new vertex
-            if(!optimizer.addVertex(body2odometry, pointcloud))
+            if(!optimizer.addVertex(body2odometry, pointcloud, laser2body))
                 throw std::runtime_error("failed to add a new vertex");
 
             new_vertecies++;
