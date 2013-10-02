@@ -186,6 +186,10 @@ void VelodyneSLAM::writeOptimizerDebugInformation()
         debug_information.graph_chi2_error = stats[stats.size()-1].chi2;
         debug_information.graph_optimization_time = stats[0].timeIteration;
     }
+
+    std::stringstream stream;
+    optimizer.dumpGraphViz(stream);
+    debug_information.graphviz = stream.str();
 }
 
 /// The following lines are template definitions for the various state machine

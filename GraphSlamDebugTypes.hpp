@@ -2,6 +2,7 @@
 #define GRAPH_SLAM_DEBUG_TASK_TYPES_HPP_
 
 #include <vector>
+#include <string>
 #include <base/time.h>
 
 namespace graph_slam
@@ -10,6 +11,7 @@ namespace graph_slam
 struct VelodyneSlamDebug
 {
     base::Time time;
+    std::string graphviz;
     int graph_num_vertices;
     int graph_num_edges;
     double graph_chi2_error;
