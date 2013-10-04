@@ -2,6 +2,7 @@ require 'vizkit'
 require 'orocos'
 require 'orocos/log'
 require "transformer/runtime"
+require File.join(File.dirname(__FILE__),'gui/gen_map_button.rb')
 
 include Orocos
 Orocos::CORBA.max_message_size = 80000000
@@ -48,13 +49,14 @@ Orocos.run "graph_slam::VelodyneSLAM" => "velodyne_slam" do
     #Orocos.log_all_ports
     
     velodyne_slam = TaskContext.get 'velodyne_slam'
-    #velodyne_slam.envire_path = "#{ENV['AUTOPROJ_PROJECT_BASE']}/slam/orogen/graph_slam/env/"
+    #velodyne_slam.environment_debug_path = "#{ENV['AUTOPROJ_PROJECT_BASE']}/slam/orogen/graph_slam/scripts/env/"
     velodyne_slam.enable_debug = true
     velodyne_slam.envire_period = 1.0
-    velodyne_slam.grid_size_x = 100
-    velodyne_slam.grid_size_y = 100
+    # distance between the laserscans
     velodyne_slam.vertex_distance = 2.0
-    velodyne_slam.max_icp_distance = 7.0
+    velodyne_slam.max_icp_distance = 6.0
+    # create a mls map, otherwise it will send out the raw pointclouds
+    velodyne_slam.use_mls = true
     velodyne_slam.grid_size_x = 200
     velodyne_slam.grid_size_y = 200
     velodyne_slam.cell_resolution_x = 0.1
@@ -76,11 +78,7 @@ Orocos.run "graph_slam::VelodyneSLAM" => "velodyne_slam" do
         end
     end
 
-    timer = Qt::Timer.new
-    timer.connect(SIGNAL('timeout()')) do
-        velodyne_slam.generateMap()
-    end
-    timer.start(30000)
+    load_generate_map_button(velodyne_slam)
 
     Orocos.transformer.setup(velodyne_slam)
 
