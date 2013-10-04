@@ -2,6 +2,7 @@ require 'vizkit'
 require 'orocos'
 require 'orocos/log'
 require "transformer/runtime"
+require File.join(File.dirname(__FILE__),'gui/graph_slam_gui.rb')
 require File.join(File.dirname(__FILE__),'gui/gen_map_button.rb')
 
 include Orocos
@@ -85,18 +86,8 @@ Orocos.run "graph_slam::VelodyneSLAM" => "velodyne_slam" do
     velodyne_slam.configure
     velodyne_slam.start
 
-    ## setup vizkit visualizations
-    view3d = Vizkit.vizkit3d_widget
-    view3d.show
-    envireviz = Vizkit.default_loader.EnvireVisualization
-    bodystateviz = Vizkit.default_loader.RigidBodyStateVisualization
-    Vizkit.connect_port_to 'velodyne_slam', 'envire_map', :pull => false, :update_frequency => 33 do |sample, name|
-        envireviz.updateBinaryEvents(sample)
-    end
-    Vizkit.connect_port_to 'velodyne_slam', 'pose_samples', :pull => false, :update_frequency => 33 do |sample, name|
-        bodystateviz.updateRigidBodyState(sample)
-    end
-    
+    load_graph_slam_gui(velodyne_slam)
+
     Vizkit.control log
     Vizkit.display velodyne_slam
     begin
