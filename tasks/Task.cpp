@@ -1,5 +1,5 @@
 #include "Task.hpp"
-#include <vizkit/EnvireVisualization.hpp>
+#include <vizkit3d/EnvireVisualization.hpp>
 
 #include <envire/tools/GraphViz.hpp>
 #include <Eigen/Dense>
@@ -107,7 +107,7 @@ bool Task::configureHook()
     if( _debug_viz.value() )
     {
 	viz.start();
-	viz.getWidget()->updateData( env );
+	viz.getWidget()->setEnvironment( env );
     }
 
     graph = new VisualPoseGraph( env );

@@ -7,5 +7,5 @@
     <depend package="slam/graph_slam"/>
     <depend package="drivers/orogen/transformer"/>
     <depend package="image_processing/orogen/stereo"/>
-    <depend package="gui/vizkit"/>
+    <depend package="gui/vizkit3d"/>
 </package>

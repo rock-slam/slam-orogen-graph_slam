@@ -4,15 +4,15 @@
 #define GRAPH_SLAM_TASK_TASK_HPP
 
 #include "graph_slam/TaskBase.hpp"
-#include <vizkit/EnvireWidget.hpp>
-#include <vizkit/QtThreadedWidget.hpp>
+#include <vizkit3d/EnvireWidget.hpp>
+#include <vizkit3d/QtThreadedWidget.hpp>
 
 namespace envire
 {
     class Environment;
 }
 
-namespace vizkit
+namespace vizkit3d
 {
     class EnvireVisualization;
 }
