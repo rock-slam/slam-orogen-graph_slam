@@ -34,13 +34,23 @@ VelodyneSLAM::~VelodyneSLAM()
 {
 }
 
-void VelodyneSLAM::handleLidarData(const base::Time &ts, bool use_simulated_data)
-{    
+void VelodyneSLAM::handleLidarData(const base::Time &ts, const velodyne_lidar::MultilevelLaserScan* lidar_sample, const base::samples::Pointcloud* simulated_pointcloud_sample)
+{
+    new_state = RUNNING;
+
     // get static transformation
     Eigen::Affine3d laser2body;
     if (!_laser2body.get(ts, laser2body))
     {
         RTT::log(RTT::Error) << "skip, have no laser2body transformation sample!" << RTT::endlog();
+        new_state = MISSING_TRANSFORMATION;
+        return;
+    }
+    // get dynamic transformation
+    envire::TransformWithUncertainty body2odometry;
+    if (!_body2odometry.get(ts, body2odometry, true))
+    {
+        RTT::log(RTT::Error) << "skip, have no body2odometry transformation sample!" << RTT::endlog();
         new_state = MISSING_TRANSFORMATION;
         return;
     }
@@ -59,23 +69,30 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, bool use_simulated_data
         {
             // fill envire pointcloud
             std::vector<Eigen::Vector3d> pointcloud;
-            if(use_simulated_data)
+            if(lidar_sample)
+            {
+                // filter point cloud
+                velodyne_lidar::MultilevelLaserScan filtered_lidar_sample;
+                velodyne_lidar::ConvertHelper::filterOutliers(*lidar_sample, filtered_lidar_sample, _maximum_angle_to_neighbor, _minimum_valid_neighbors);
+                
+                // add new vertex to graph
+                velodyne_lidar::ConvertHelper::convertScanToPointCloud(filtered_lidar_sample, pointcloud, laser2body);
+            }
+            else if(simulated_pointcloud_sample)
             {
                 // transform pointcloud to body frame
-                for(std::vector<base::Vector3d>::const_iterator it = new_simulated_pointcloud_sample.points.begin(); it != new_simulated_pointcloud_sample.points.end(); it++)
+                for(std::vector<base::Vector3d>::const_iterator it = simulated_pointcloud_sample->points.begin(); it != simulated_pointcloud_sample->points.end(); it++)
                 {
                     pointcloud.push_back(laser2body * (*it));
                 }
             }
             else
             {
-                // filter point cloud
-                velodyne_lidar::MultilevelLaserScan filtered_lidar_sample;
-                velodyne_lidar::ConvertHelper::filterOutliers(new_lidar_sample, filtered_lidar_sample, _maximum_angle_to_neighbor, _minimum_valid_neighbors);
-                
-                // add new vertex to graph
-                velodyne_lidar::ConvertHelper::convertScanToPointCloud(filtered_lidar_sample, pointcloud, laser2body);
+                throw std::runtime_error("data sample is missing");
             }
+
+            if(pointcloud.empty())
+                throw std::runtime_error("pointcloud is empty");
             
             // add new vertex
             if(!optimizer.addVertex(body2odometry, pointcloud, laser2body))
@@ -127,16 +144,12 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, bool use_simulated_data
 
 void VelodyneSLAM::lidar_samplesTransformerCallback(const base::Time &ts, const ::velodyne_lidar::MultilevelLaserScan &lidar_sample)
 {
-    new_state = RUNNING;
-    new_lidar_sample = lidar_sample;
-    // get dynamic transformation
-    if (!_body2odometry.get(ts, body2odometry, true))
-    {
-        RTT::log(RTT::Error) << "skip, have no body2odometry transformation sample!" << RTT::endlog();
-        new_state = MISSING_TRANSFORMATION;
-        return;
-    }
-    handleLidarData(lidar_sample.time, false);
+    handleLidarData(lidar_sample.time, &lidar_sample);
+}
+
+void VelodyneSLAM::simulated_pointcloudTransformerCallback(const base::Time &ts, const ::base::samples::Pointcloud &simulated_pointcloud_sample)
+{
+    handleLidarData(simulated_pointcloud_sample.time, NULL, &simulated_pointcloud_sample);
 }
 
 bool VelodyneSLAM::generateMap()
@@ -282,16 +295,6 @@ void VelodyneSLAM::updateHook()
         {
             orocos_emitter.reset();
         }
-    }
-    
-    // handle simulated data
-    if(_simulated_pointcloud.readNewest(new_simulated_pointcloud_sample) == RTT::NewData)
-    {
-        new_state = RUNNING;
-        body2odometry.setTransform(odometry_pose.getTransform());
-        body2odometry.setCovariance(combineToPoseCovariance(odometry_pose.cov_position, odometry_pose.cov_orientation));
-        if(new_simulated_pointcloud_sample.points.size() > 0)
-            handleLidarData(new_simulated_pointcloud_sample.time, true);
     }
     
     // create new edges

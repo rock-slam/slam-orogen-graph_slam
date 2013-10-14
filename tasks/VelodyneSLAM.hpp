@@ -51,9 +51,6 @@ namespace graph_slam {
         envire::TransformWithUncertainty last_odometry_transformation;
         graph_slam::ExtendedSparseOptimizer optimizer;
         unsigned try_edges_on_update;
-        velodyne_lidar::MultilevelLaserScan new_lidar_sample;
-        base::samples::Pointcloud new_simulated_pointcloud_sample;
-        envire::TransformWithUncertainty body2odometry;
         unsigned new_vertecies;
         unsigned edge_count;
         bool map_updated;
@@ -62,8 +59,9 @@ namespace graph_slam {
         VelodyneSlamDebug debug_information;
 
     protected:
-        void handleLidarData(const base::Time &ts, bool use_simulated_data);
+        void handleLidarData(const base::Time &ts, const velodyne_lidar::MultilevelLaserScan* lidar_sample, const base::samples::Pointcloud* simulated_pointcloud_sample = NULL);
         virtual void lidar_samplesTransformerCallback(const base::Time &ts, const ::velodyne_lidar::MultilevelLaserScan &lidar_samples_sample);
+        virtual void simulated_pointcloudTransformerCallback(const base::Time &ts, const ::base::samples::Pointcloud &simulated_pointcloud_sample);
         virtual bool generateMap();
         void writeOptimizerDebugInformation();
 
