@@ -132,6 +132,8 @@ task_context "VelodyneSLAM" do
 
         transformation("laser", "body")
         transformation("body", "odometry")
+        transformation("map", "world")
+        transformation("odometry", "world")
 
         align_port("lidar_samples", 0.1)
         align_port("simulated_pointcloud", 0.1)
