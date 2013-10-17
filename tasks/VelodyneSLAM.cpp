@@ -38,7 +38,7 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, const velodyne_lidar::M
 {
     new_state = RUNNING;
 
-    // get static transformation
+    // get transformations
     Eigen::Affine3d laser2body;
     if (!_laser2body.get(ts, laser2body))
     {
@@ -46,7 +46,6 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, const velodyne_lidar::M
         new_state = MISSING_TRANSFORMATION;
         return;
     }
-    // get dynamic transformation
     envire::TransformWithUncertainty body2odometry;
     if (!_body2odometry.get(ts, body2odometry, true))
     {
@@ -75,7 +74,7 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, const velodyne_lidar::M
                 velodyne_lidar::MultilevelLaserScan filtered_lidar_sample;
                 velodyne_lidar::ConvertHelper::filterOutliers(*lidar_sample, filtered_lidar_sample, _maximum_angle_to_neighbor, _minimum_valid_neighbors);
                 
-                // add new vertex to graph
+                // convert scan to pointcloud
                 velodyne_lidar::ConvertHelper::convertScanToPointCloud(filtered_lidar_sample, pointcloud, laser2body);
             }
             else if(simulated_pointcloud_sample)
@@ -94,7 +93,7 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, const velodyne_lidar::M
             if(pointcloud.empty())
                 throw std::runtime_error("pointcloud is empty");
             
-            // add new vertex
+            // add new vertex to graph
             if(!optimizer.addVertex(body2odometry, pointcloud, laser2body))
                 throw std::runtime_error("failed to add a new vertex");
 
@@ -119,7 +118,7 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, const velodyne_lidar::M
         {
             // run graph optimization
             if(optimizer.optimize(2) < 1)
-                throw std::runtime_error("edge optimization failed");
+                throw std::runtime_error("optimization failed!");
             if(_enable_debug)
                 writeOptimizerDebugInformation();
 
@@ -214,6 +213,7 @@ bool VelodyneSLAM::configureHook()
     if (! VelodyneSLAMBase::configureHook())
         return false;
     
+    // setup inital configuration
     last_state = PRE_OPERATIONAL;
     new_state = RUNNING;
     new_vertecies = 0;
@@ -273,7 +273,6 @@ void VelodyneSLAM::updateHook()
         {
             adjusted_odometry_pose.sourceFrame = _body_frame.get();
             adjusted_odometry_pose.targetFrame = _world_frame.get();
-            //adjusted_odometry_pose.time = base::Time::now(); //TODO Problem/remove?
             _pose_samples.write(adjusted_odometry_pose);
         }
     }
