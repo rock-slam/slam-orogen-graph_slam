@@ -18,7 +18,9 @@ def load_graph_slam_gui(velodyne_slam_task)
 
     if velodyne_slam_task.is_a?(Orocos::Async::TaskContextProxy) then
         velodyne_slam_task.port("debug_information").on_data do |data|
+            vertical_scrollbar_value = widget.graph_viz_dot.verticalScrollBar.value
             semaphore.synchronize { widget.graph_viz_dot.plainText = data.graphviz }
+            widget.graph_viz_dot.verticalScrollBar.setValue(vertical_scrollbar_value)
         end
 
         velodyne_slam_task.port("envire_map").once_on_reachable do
@@ -31,7 +33,9 @@ def load_graph_slam_gui(velodyne_slam_task)
 
     elsif velodyne_slam_task.is_a?(Orocos::TaskContext)
         velodyne_slam_task.debug_information.connect_to do |data,_|
+            vertical_scrollbar_value = widget.graph_viz_dot.verticalScrollBar.value
             semaphore.synchronize { widget.graph_viz_dot.plainText = data.graphviz }
+            widget.graph_viz_dot.verticalScrollBar.setValue(vertical_scrollbar_value)
         end
 
         Vizkit.display velodyne_slam_task.envire_map
