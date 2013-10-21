@@ -62,7 +62,7 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, const velodyne_lidar::M
     try_edges_on_update = 1;
 
     Eigen::Affine3d odometry_delta = last_odometry_transformation.getTransform().inverse() * body2odometry.getTransform();
-    if(odometry_delta.translation().norm() > _vertex_distance.get() || optimizer.vertices().size() == 0)
+    if(odometry_delta.translation().norm() > _vertex_distance.get() || (base::Time::now() - last_new_vertex).toSeconds() > _new_vertex_time)
     {
         try
         {
@@ -105,6 +105,7 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, const velodyne_lidar::M
             new_state = ADD_VERTEX_FAILED;
         }
         
+        last_new_vertex = base::Time::now();
         last_odometry_transformation = body2odometry;
     }
 
@@ -233,6 +234,7 @@ bool VelodyneSLAM::configureHook()
     new_vertecies = 0;
     edge_count = 0;
     try_edges_on_update = 0;
+    last_new_vertex.microseconds = 0;
     last_envire_update.microseconds = 0;
     last_odometry_transformation = envire::TransformWithUncertainty::Identity();
     optimizer.setMLSMapConfiguration(_use_mls, _grid_size_x, _grid_size_y, _cell_resolution_x, _cell_resolution_y, _grid_min_z, _grid_max_z);

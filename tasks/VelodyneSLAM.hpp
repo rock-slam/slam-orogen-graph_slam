@@ -57,6 +57,7 @@ namespace graph_slam {
         States last_state;
         States new_state;
         VelodyneSlamDebug debug_information;
+        base::Time last_new_vertex;
 
     protected:
         void handleLidarData(const base::Time &ts, const velodyne_lidar::MultilevelLaserScan* lidar_sample, const base::samples::Pointcloud* simulated_pointcloud_sample = NULL);
