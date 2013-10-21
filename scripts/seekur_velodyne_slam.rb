@@ -23,10 +23,8 @@ velodyne_ports = log.find_all_output_ports("/velodyne_lidar/MultilevelLaserScan"
 task_states = log.find_all_output_ports("/int32_t", "state")
 if log.has_task?("odometry") then
     odometry_port = log.find_all_output_ports("/base/samples/RigidBodyState_m", "odometry_samples")
-    Orocos.transformer.load_conf(File.join(File.dirname(__FILE__),"seekur_transforms.rb"))
 elsif log.has_task?("seekur_drv") then
     odometry_port = log.find_all_output_ports("/base/samples/RigidBodyState_m", "robot_pose")
-    Orocos.transformer.load_conf(File.join(File.dirname(__FILE__),"seekur_sand_track_transforms.rb"))
 else
     puts "could not find odometry samples"
     exit
@@ -47,6 +45,15 @@ end
 
 Orocos.run "graph_slam::VelodyneSLAM" => "velodyne_slam" do
 
+    # load transforms
+    if log.has_task?("odometry") then
+        Orocos.transformer.load_conf(File.join(File.dirname(__FILE__),"seekur_transforms.rb"))
+    elsif log.has_task?("seekur_drv") then
+        Orocos.transformer.load_conf(File.join(File.dirname(__FILE__),"seekur_sand_track_transforms.rb"))
+    else
+        puts "could not find odometry samples"
+        exit
+    end
     #Orocos.log_all_ports
     
     velodyne_slam = TaskContext.get 'velodyne_slam'
