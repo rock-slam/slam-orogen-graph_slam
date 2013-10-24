@@ -221,11 +221,10 @@ bool VelodyneSLAM::configureHook()
         RTT::log(RTT::Error) << "Couldn't get map2world transformation, using identity instead." << RTT::endlog();
         map2world = Eigen::Affine3d::Identity();
     }
-    Eigen::Affine3d odometry2world;
-    if (!_odometry2world.get(base::Time::now(), odometry2world))
+    Eigen::Affine3d start_pose = Eigen::Affine3d::Identity();
+    if(_start_pose.get().hasValidPosition() && _start_pose.get().hasValidOrientation())
     {
-        RTT::log(RTT::Error) << "Couldn't get odometry2world transformation, using identity instead." << RTT::endlog();
-        odometry2world = Eigen::Affine3d::Identity();
+        start_pose = _start_pose.get().getTransform();
     }
     
     // setup inital configuration
@@ -239,7 +238,7 @@ bool VelodyneSLAM::configureHook()
     last_odometry_transformation = envire::TransformWithUncertainty::Identity();
     optimizer.setMLSMapConfiguration(_use_mls, _grid_size_x, _grid_size_y, _cell_resolution_x, _cell_resolution_y, _grid_min_z, _grid_max_z);
     optimizer.setMap2WorldTransformation(Eigen::Isometry3d(map2world.matrix()));
-    optimizer.setOdometry2WorldTransformation(Eigen::Isometry3d(odometry2world.matrix()));
+    optimizer.setRobotStart2WorldTransformation(Eigen::Isometry3d(start_pose.matrix()));
     event_filter.reset(new MLSGridEventFilter());
     
     g2o::OptimizableGraph::initMultiThreading();

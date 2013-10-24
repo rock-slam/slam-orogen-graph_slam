@@ -84,6 +84,8 @@ task_context "VelodyneSLAM" do
     property('max_vertices_per_cell', 'int', 5).
         doc 'maximum count of vertices per cell'
     
+    property('start_pose', '/base/samples/RigidBodyState').
+        doc 'start pose of the robot in the world frame'
     ## envire configuration
     property('envire_period', 'double', 1.0).
         doc 'update period in s for the envire_map port.'
@@ -135,7 +137,6 @@ task_context "VelodyneSLAM" do
         transformation("laser", "body")
         transformation("body", "odometry")
         transformation("map", "world")
-        transformation("odometry", "world")
 
         align_port("lidar_samples", 0.1)
         align_port("simulated_pointcloud", 0.1)
