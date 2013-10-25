@@ -189,6 +189,24 @@ bool VelodyneSLAM::generateMap()
     return !err;
 }
 
+bool VelodyneSLAM::saveEnvironment(::std::string const & path)
+{
+    try
+    {
+        // generate map update
+        generateMap();
+
+        // serialize environment
+        optimizer.getEnvironment()->serialize(path);
+        return true;
+    }
+    catch(std::runtime_error e)
+    {
+        RTT::log(RTT::Error) << "Exception while serialization of the map data: " << e.what() << RTT::endlog();
+    }
+    return false;
+}
+
 void VelodyneSLAM::writeOptimizerDebugInformation()
 {
     const g2o::BatchStatisticsContainer& stats = optimizer.batchStatistics();

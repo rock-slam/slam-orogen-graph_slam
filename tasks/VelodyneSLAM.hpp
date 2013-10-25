@@ -64,6 +64,7 @@ namespace graph_slam {
         virtual void lidar_samplesTransformerCallback(const base::Time &ts, const ::velodyne_lidar::MultilevelLaserScan &lidar_samples_sample);
         virtual void simulated_pointcloudTransformerCallback(const base::Time &ts, const ::base::samples::Pointcloud &simulated_pointcloud_sample);
         virtual bool generateMap();
+        virtual bool saveEnvironment(::std::string const & path);
         void writeOptimizerDebugInformation();
 
     public:

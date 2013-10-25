@@ -146,6 +146,10 @@ task_context "VelodyneSLAM" do
     operation('generateMap').
         returns('bool').
         doc 'generates and updates the environment map'
+    operation('saveEnvironment').
+        returns('bool').
+        argument('value', 'string', 'value').
+        doc 'saves the complete map'
 
     ## states
     runtime_states :MISSING_TRANSFORMATION, :GRAPH_OPTIMIZATION_FAILED, :MAP_GENERATION_FAILED, :ADD_VERTEX_FAILED
