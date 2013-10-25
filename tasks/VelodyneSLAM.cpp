@@ -268,11 +268,11 @@ void VelodyneSLAM::updateHook()
         // which will write envire data to a port
         boost::shared_ptr<envire::Environment> env = optimizer.getEnvironment();
         orocos_emitter.reset(new envire::OrocosEmitter( _envire_map ));
-        orocos_emitter->useContextUpdates( env.get() );
-        orocos_emitter->useEventQueue( true );
-        orocos_emitter->attach( env.get() );
         if(_use_mls)
             orocos_emitter->setFilter(event_filter.get());
+        orocos_emitter->useEventQueue( true );
+        orocos_emitter->useContextUpdates( env.get() );
+        orocos_emitter->attach( env.get() );
     }
 
     // enable debug output
