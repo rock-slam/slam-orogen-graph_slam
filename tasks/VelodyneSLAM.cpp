@@ -253,6 +253,7 @@ bool VelodyneSLAM::configureHook()
     try_edges_on_update = 0;
     last_new_vertex.microseconds = 0;
     last_envire_update.microseconds = 0;
+    debug_information.time.microseconds = 0;
     last_odometry_transformation = envire::TransformWithUncertainty::Identity();
     optimizer.setMLSMapConfiguration(_use_mls, _grid_size_x, _grid_size_y, _cell_resolution_x, _cell_resolution_y, _grid_min_z, _grid_max_z);
     optimizer.setMap2WorldTransformation(Eigen::Isometry3d(map2world.matrix()));
@@ -346,7 +347,7 @@ void VelodyneSLAM::updateHook()
     }
 
     // write debug information
-    if(_enable_debug)
+    if(_enable_debug && debug_information.time + base::Time::fromSeconds(1.0) <  base::Time::now())
     {
         debug_information.time = base::Time::now();
         _debug_information.write(debug_information);
