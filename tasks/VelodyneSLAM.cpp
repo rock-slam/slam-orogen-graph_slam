@@ -316,7 +316,14 @@ void VelodyneSLAM::updateHook()
     // create new edges
     if(try_edges_on_update > 0)
     {
-        MEASURE_TIME(optimizer.tryBestEdgeCandidates(1), debug_information.try_edge_candidate_time);
+        try
+        {
+            MEASURE_TIME(optimizer.tryBestEdgeCandidates(1), debug_information.try_edge_candidate_time);
+        }
+        catch(std::runtime_error e)
+        {
+            RTT::log(RTT::Error) << "Failed to add new edge from candidates: " << e.what() << RTT::endlog();
+        }
         try_edges_on_update--;
     }
 
