@@ -269,6 +269,22 @@ bool VelodyneSLAM::configureHook()
     optimizer.updateGICPConfiguration(gicp_config);
 
     optimizer.setupMaxVertexGrid(_max_vertices_per_cell, _grid_size_x, _grid_size_y, _vertex_grid_cell_resolution);
+
+    // load reference map
+    if(_apriori_map.get() != "")
+    {
+        try
+        {
+            boost::shared_ptr<envire::Environment> env(envire::Environment::unserialize(_apriori_map.get()));
+
+            if(!optimizer.setAPrioriMap(env))
+                RTT::log(RTT::Error) << "Failed to add a-priori map." << RTT::endlog();
+        }
+        catch(std::runtime_error e)
+        {
+            RTT::log(RTT::Error) << "Failed to load a-priori map: " << e.what() << RTT::endlog();
+        }
+    }
     
     return true;
 }
