@@ -158,7 +158,7 @@ bool VelodyneSLAM::generateMap()
     try
     {
         // run graph optimization
-        if(optimizer.optimize(5) < 1)
+        if(optimizer.activeVertices().size() && optimizer.optimize(5) < 1)
         {
             err = true;
             RTT::log(RTT::Error) << "optimization failed" << RTT::endlog();
