@@ -233,12 +233,8 @@ bool VelodyneSLAM::configureHook()
         return false;
 
     // get static transformations
-    Eigen::Affine3d map2world;
-    if (!_map2world.get(base::Time::now(), map2world))
-    {
-        RTT::log(RTT::Error) << "Couldn't get map2world transformation, using identity instead." << RTT::endlog();
-        map2world = Eigen::Affine3d::Identity();
-    }
+    Eigen::Affine3d map2world = Eigen::Affine3d::Identity();
+    map2world.translation() = _grid_offset.get();
     Eigen::Affine3d start_pose = Eigen::Affine3d::Identity();
     if(_start_pose.get().hasValidPosition() && _start_pose.get().hasValidOrientation())
     {
