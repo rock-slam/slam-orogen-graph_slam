@@ -254,6 +254,7 @@ bool VelodyneSLAM::configureHook()
     last_new_vertex.microseconds = 0;
     last_envire_update.microseconds = 0;
     debug_information.time.microseconds = 0;
+    debug_information = VelodyneSlamDebug();
     last_odometry_transformation = envire::TransformWithUncertainty::Identity();
     optimizer.setMLSMapConfiguration(_use_mls, _grid_size_x, _grid_size_y, _cell_resolution_x, _cell_resolution_y, _grid_min_z, _grid_max_z);
     optimizer.setMap2WorldTransformation(Eigen::Isometry3d(map2world.matrix()));
@@ -403,6 +404,9 @@ void VelodyneSLAM::stopHook()
 void VelodyneSLAM::cleanupHook()
 {
     VelodyneSLAMBase::cleanupHook();
+
+    orocos_emitter.reset();
+    event_filter.reset();
     
     // freeing the graph memory
     optimizer.clear();
