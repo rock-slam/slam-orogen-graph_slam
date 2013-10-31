@@ -111,7 +111,7 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, const velodyne_lidar::M
 
     // optimization
     unsigned new_edges = optimizer.edges().size() - edge_count;
-    if(new_edges >= _run_graph_optimization_counter)
+    if(new_edges >= _run_graph_optimization_counter || optimizer.vertices().size() == 2)
     {
         edge_count = optimizer.edges().size();
 
