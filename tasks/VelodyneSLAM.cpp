@@ -252,7 +252,7 @@ bool VelodyneSLAM::configureHook()
     debug_information.time.microseconds = 0;
     debug_information = VelodyneSlamDebug();
     last_odometry_transformation = envire::TransformWithUncertainty::Identity();
-    optimizer.setMLSMapConfiguration(_use_mls, _grid_size_x, _grid_size_y, _cell_resolution_x, _cell_resolution_y, _grid_min_z, _grid_max_z);
+    optimizer.setMLSMapConfiguration(_use_mls, "/mls-grid", _grid_size_x, _grid_size_y, _cell_resolution_x, _cell_resolution_y, _grid_min_z, _grid_max_z);
     optimizer.setMap2WorldTransformation(Eigen::Isometry3d(map2world.matrix()));
     optimizer.setRobotStart2WorldTransformation(Eigen::Isometry3d(start_pose.matrix()));
     event_filter.reset(new MLSGridEventFilter());
