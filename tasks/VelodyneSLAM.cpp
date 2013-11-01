@@ -111,7 +111,7 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, const velodyne_lidar::M
 
     // optimization
     unsigned new_edges = optimizer.edges().size() - edge_count;
-    if(new_edges >= _run_graph_optimization_counter || optimizer.vertices().size() == 2)
+    if(new_edges >= _run_graph_optimization_counter || (!initial_optimization && optimizer.vertices().size() >= 2))
     {
         edge_count = optimizer.edges().size();
 
@@ -120,6 +120,7 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, const velodyne_lidar::M
             // run graph optimization
             if(optimizer.optimize(2) < 1)
                 throw std::runtime_error("optimization failed!");
+            initial_optimization = true;
             if(_enable_debug)
                 writeOptimizerDebugInformation();
 
@@ -244,6 +245,8 @@ bool VelodyneSLAM::configureHook()
     // setup inital configuration
     last_state = PRE_OPERATIONAL;
     new_state = RUNNING;
+    initial_optimization = false;
+    map_updated = false;
     new_vertecies = 0;
     edge_count = 0;
     try_edges_on_update = 0;

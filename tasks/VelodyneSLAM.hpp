@@ -54,6 +54,7 @@ namespace graph_slam {
         unsigned new_vertecies;
         unsigned edge_count;
         bool map_updated;
+        bool initial_optimization;
         States last_state;
         States new_state;
         VelodyneSlamDebug debug_information;
