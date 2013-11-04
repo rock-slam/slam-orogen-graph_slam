@@ -337,6 +337,7 @@ void VelodyneSLAM::updateHook()
             if( (last_envire_update + base::Time::fromSeconds(_envire_period.value())) < base::Time::now() &&
                     map_updated ) 
             {
+                orocos_emitter->setTime(base::Time::now());
                 orocos_emitter->flush();
                 map_updated = false;
                 last_envire_update = base::Time::now();
