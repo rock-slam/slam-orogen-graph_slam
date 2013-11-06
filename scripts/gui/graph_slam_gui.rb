@@ -16,6 +16,13 @@ def load_graph_slam_gui(velodyne_slam_task)
         end
     end
 
+    widget.open_in_xdot.connect(SIGNAL('released()')) do
+        dot_file = File.new("/tmp/graph_viz.dot", "w")
+        semaphore.synchronize { dot_file.write(widget.graph_viz_dot.plainText) }
+        dot_file.close
+        system( "xdot -f neato /tmp/graph_viz.dot" )
+    end
+
     if velodyne_slam_task.is_a?(Orocos::Async::TaskContextProxy) then
         velodyne_slam_task.port("debug_information").on_data do |data|
             vertical_scrollbar_value = widget.graph_viz_dot.verticalScrollBar.value
@@ -39,6 +46,7 @@ def load_graph_slam_gui(velodyne_slam_task)
         end
 
         Vizkit.display velodyne_slam_task.envire_map
+        Vizkit.display velodyne_slam_task.pose_samples, :widget => Vizkit.default_loader.TrajectoryVisualization
         Vizkit.display velodyne_slam_task.pose_samples, :widget => Vizkit.default_loader.RigidBodyStateVisualization
     else
         puts "error velodyne_slam_task is no valid TaskContext"

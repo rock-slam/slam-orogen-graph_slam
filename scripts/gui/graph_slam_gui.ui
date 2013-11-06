@@ -38,6 +38,13 @@
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
+        <widget class="QPushButton" name="open_in_xdot">
+         <property name="text">
+          <string>Show in xdot</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QPushButton" name="update_graph_viz">
          <property name="text">
           <string>update Graphviz</string>
@@ -88,9 +95,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>vizkit::Vizkit3DWidget</class>
+   <class>vizkit3d::Vizkit3DWidget</class>
    <extends>QWidget</extends>
-   <header>vizkit/Vizkit3DWidget.hpp</header>
+   <header>vizkit3d/Vizkit3DWidget.hpp</header>
   </customwidget>
  </customwidgets>
  <resources/>
