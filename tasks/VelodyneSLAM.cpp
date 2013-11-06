@@ -279,6 +279,36 @@ bool VelodyneSLAM::configureHook()
 
             if(!optimizer.setAPrioriMap(env))
                 RTT::log(RTT::Error) << "Failed to add a-priori map." << RTT::endlog();
+            else if(!_start_pose.get().hasValidPosition() || !_start_pose.get().hasValidOrientation())
+            {
+                RTT::log(RTT::Info) << "Successfully loaded a-priori map." << RTT::endlog();
+                RTT::log(RTT::Info) << "Load pose of last pointcloud as start pose." << RTT::endlog();
+                // set last vertex pose as start pose
+                std::vector<envire::Pointcloud*> pointclouds = env->getItems<envire::Pointcloud>();
+                if(!pointclouds.empty())
+                {
+                    // find pointcloud with the highest id
+                    envire::Pointcloud* pointcloud = 0;
+                    long pc_id = pointclouds.front()->getUniqueIdNumericalSuffix();
+                    for(unsigned i = 1; i < pointclouds.size(); i++)
+                    {
+                        long id = pointclouds[i]->getUniqueIdNumericalSuffix();
+                        if(id > pc_id)
+                        {
+                            pointcloud = pointclouds[i];
+                            pc_id = id;
+                        }
+                    }
+                    if(pointcloud)
+                    {
+                        base::Transform3d pc2world = env->relativeTransform(pointcloud->getFrameNode(), env->getRootNode());
+                        optimizer.setRobotStart2WorldTransformation(Eigen::Isometry3d(pc2world.matrix()));
+                    }
+                }
+
+            }
+            else
+                RTT::log(RTT::Info) << "Successfully loaded a-priori map." << RTT::endlog();
         }
         catch(std::runtime_error e)
         {
