@@ -198,7 +198,10 @@ bool VelodyneSLAM::saveEnvironment(::std::string const & path)
         generateMap();
 
         // serialize environment
-        optimizer.getEnvironment()->serialize(path);
+        if(path.empty() && !_environment_debug_path.get().empty())
+            optimizer.getEnvironment()->serialize(_environment_debug_path.get());
+        else
+            optimizer.getEnvironment()->serialize(path);
         return true;
     }
     catch(std::runtime_error e)
