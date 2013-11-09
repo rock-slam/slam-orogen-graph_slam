@@ -282,7 +282,7 @@ bool VelodyneSLAM::configureHook()
 
             if(!optimizer.setAPrioriMap(env))
                 RTT::log(RTT::Error) << "Failed to add a-priori map." << RTT::endlog();
-            else if(!_start_pose.get().hasValidPosition() || !_start_pose.get().hasValidOrientation())
+            else //if(!_start_pose.get().hasValidPosition() || !_start_pose.get().hasValidOrientation())
             {
                 RTT::log(RTT::Info) << "Successfully loaded a-priori map." << RTT::endlog();
                 RTT::log(RTT::Info) << "Load pose of last pointcloud as start pose." << RTT::endlog();
@@ -310,8 +310,6 @@ bool VelodyneSLAM::configureHook()
                 }
 
             }
-            else
-                RTT::log(RTT::Info) << "Successfully loaded a-priori map." << RTT::endlog();
         }
         catch(std::runtime_error e)
         {
