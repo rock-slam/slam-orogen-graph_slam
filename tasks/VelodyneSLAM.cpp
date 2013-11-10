@@ -150,7 +150,20 @@ void VelodyneSLAM::lidar_samplesTransformerCallback(const base::Time &ts, const 
 
 void VelodyneSLAM::simulated_pointcloudTransformerCallback(const base::Time &ts, const ::base::samples::Pointcloud &simulated_pointcloud_sample)
 {
-    handleLidarData(simulated_pointcloud_sample.time, NULL, &simulated_pointcloud_sample);
+    // check simulated pointcloud for nan values
+    base::samples::Pointcloud simulated_pointcloud;
+    simulated_pointcloud.time = simulated_pointcloud_sample.time;
+    for(unsigned i = 0; i < simulated_pointcloud_sample.points.size(); i++)
+    {
+        if(!boost::math::isnan(simulated_pointcloud_sample.points[i].x()) && 
+           !boost::math::isnan(simulated_pointcloud_sample.points[i].y()) &&
+           !boost::math::isnan(simulated_pointcloud_sample.points[i].z()))
+        {
+            simulated_pointcloud.points.push_back(simulated_pointcloud_sample.points[i]);
+        }
+    }
+
+    handleLidarData(simulated_pointcloud_sample.time, NULL, &simulated_pointcloud);
 }
 
 bool VelodyneSLAM::generateMap()
