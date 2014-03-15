@@ -51,6 +51,7 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, const velodyne_lidar::M
     {
         RTT::log(RTT::Error) << "skip, have no body2odometry transformation sample!" << RTT::endlog();
         new_state = MISSING_TRANSFORMATION;
+	last_body2odometry_valid = false;
         return;
     }
     
@@ -61,8 +62,8 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, const velodyne_lidar::M
     // reset number of edge candidates handled in the update hook
     try_edges_on_update = 1;
 
-    Eigen::Affine3d odometry_delta = last_odometry_transformation.getTransform().inverse() * body2odometry.getTransform();
-    if(odometry_delta.translation().norm() > _vertex_distance.get() || (base::Time::now() - last_new_vertex).toSeconds() > _new_vertex_time)
+    Eigen::Affine3d odometry_delta = last_vertex_odometry_transformation.getTransform().inverse() * body2odometry.getTransform();
+    if( last_body2odometry_valid && (odometry_delta.translation().norm() > _vertex_distance.get() || (base::Time::now() - last_new_vertex).toSeconds() > _new_vertex_time) )
     {
         try
         {
@@ -75,7 +76,8 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, const velodyne_lidar::M
                 velodyne_lidar::ConvertHelper::filterOutliers(*lidar_sample, filtered_lidar_sample, _maximum_angle_to_neighbor, _minimum_valid_neighbors);
                 
                 // convert scan to pointcloud
-                velodyne_lidar::ConvertHelper::convertScanToPointCloud(filtered_lidar_sample, pointcloud, laser2body);
+		Eigen::Affine3d scanBegin2scanEnd = last_body2odometry.getTransform().inverse() * body2odometry.getTransform();
+                velodyne_lidar::ConvertHelper::convertScanToPointCloud(filtered_lidar_sample, pointcloud, scanBegin2scanEnd.inverse() * laser2body, laser2body);
             }
             else if(simulated_pointcloud_sample)
             {
@@ -106,8 +108,11 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, const velodyne_lidar::M
         }
         
         last_new_vertex = base::Time::now();
-        last_odometry_transformation = body2odometry;
+        last_vertex_odometry_transformation = body2odometry;
     }
+    
+    last_body2odometry = body2odometry;
+    last_body2odometry_valid = true;
 
     // optimization
     unsigned new_edges = optimizer.edges().size() - edge_count;
@@ -263,6 +268,7 @@ bool VelodyneSLAM::configureHook()
     new_state = RUNNING;
     initial_optimization = false;
     map_updated = false;
+    last_body2odometry_valid = false;
     new_vertecies = 0;
     edge_count = 0;
     try_edges_on_update = 0;
@@ -270,7 +276,8 @@ bool VelodyneSLAM::configureHook()
     last_envire_update.microseconds = 0;
     debug_information.time.microseconds = 0;
     debug_information = VelodyneSlamDebug();
-    last_odometry_transformation = envire::TransformWithUncertainty::Identity();
+    last_vertex_odometry_transformation = envire::TransformWithUncertainty::Identity();
+    last_body2odometry = envire::TransformWithUncertainty::Identity();
     optimizer.setMLSMapConfiguration(_use_mls, "/mls-grid", _grid_size_x, _grid_size_y, _cell_resolution_x, _cell_resolution_y, _grid_min_z, _grid_max_z);
     optimizer.setMap2WorldTransformation(Eigen::Isometry3d(map2world.matrix()));
     optimizer.setRobotStart2WorldTransformation(Eigen::Isometry3d(start_pose.matrix()));

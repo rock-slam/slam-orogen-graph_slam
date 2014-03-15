@@ -48,13 +48,15 @@ namespace graph_slam {
         boost::shared_ptr<envire::OrocosEmitter> orocos_emitter;
         boost::shared_ptr<MLSGridEventFilter> event_filter;
         base::Time last_envire_update;
-        envire::TransformWithUncertainty last_odometry_transformation;
+        envire::TransformWithUncertainty last_vertex_odometry_transformation;
+	envire::TransformWithUncertainty last_body2odometry;
         graph_slam::ExtendedSparseOptimizer optimizer;
         unsigned try_edges_on_update;
         unsigned new_vertecies;
         unsigned edge_count;
         bool map_updated;
         bool initial_optimization;
+	bool last_body2odometry_valid;
         States last_state;
         States new_state;
         VelodyneSlamDebug debug_information;
