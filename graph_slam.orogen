@@ -4,9 +4,14 @@ using_library 'hogman'
 using_library 'envire'
 using_library 'graph_slam'
 using_library 'vizkit3d'
+using_library 'g2o'
+using_library 'velodyne_lidar'
 
 import_types_from 'base'
 import_types_from 'stereo'
+import_types_from 'envire'
+import_types_from 'velodyne_lidar/MultilevelLaserScan.h'
+import_types_from 'GraphSlamDebugTypes.hpp'
 
 task_context "Task" do
 
@@ -48,6 +53,113 @@ task_context "Task" do
 
     port_driven
 end
+
+task_context "VelodyneSLAM" do
+    needs_configuration
+
+    # The target frame in the generated poses. The source frame is the body
+    # frame (as declared in the transformer configuration)
+    property 'world_frame', '/std/string', 'world'
+    
+    ## point cloud filter parameter
+    property('maximum_angle_to_neighbor', 'double', 2.53).
+        doc('valid neigbors have an angle not greater than this value.').
+        doc('the angle is always defined from the origin to the more distant point.')
+    property('minimum_valid_neighbors', 'int', 2).
+        doc('minimum amount of valid neigbors')
+    
+    ## slam configuration
+    property('vertex_distance', 'double', 0.5).
+        doc 'the translation after a new laser scan is added to the graph'
+    property('new_vertex_time', 'double', 30.0).
+        doc 'the seconds after which a new laser scan is added to the graph'
+    property('max_icp_distance', 'double', 1.5).
+        doc 'the maximum distance for the search for new icp based transformations'
+    property('max_icp_fitness_score', 'double', 1.0).
+        doc 'the maximum fitness score an icp transformation can have to be valid'
+    property('run_graph_optimization_counter', 'int', 5).
+        doc 'the graph will be optimized every n edges'
+    property('vertex_grid_cell_resolution', 'double', 0.5).
+        doc 'cell resolution of the max vertex grid'
+    property('max_vertices_per_cell', 'int', 5).
+        doc 'maximum count of vertices per cell'
+    property('apriori_map', '/std/string', "").
+        doc 'a apriori reference map will be added to the graph as soon there is a connection to the current map'
+    property('start_pose', '/base/samples/RigidBodyState').
+        doc 'start pose of the robot in the world frame'
+
+    ## envire configuration
+    property('envire_period', 'double', 1.0).
+        doc 'update period in s for the envire_map port.'
+    property('environment_debug_path', 'string', "").
+        doc 'if this property is set, the final environment will be written to the given file path.'
+    property('use_mls', 'bool', false).
+        doc 'show a MLS map in envire.'
+    property('grid_offset', '/base/Vector3d').
+        doc 'offset of the middle of the grid in the world frame'
+    property('grid_size_x', 'double', 50.0).
+        doc 'x size of the grid in meter'
+    property('grid_size_y', 'double', 50.0).
+        doc 'y size of the grid in meter'
+    property('cell_resolution_x', 'double', 0.1).
+        doc 'x cell resolution in meter'
+    property('cell_resolution_y', 'double', 0.1).
+        doc 'y cell resolution in meter'
+    property('grid_min_z', 'double', -50.0).
+        doc 'lower z boundary in the mls grid'
+    property('grid_max_z', 'double', 50.0).
+        doc 'upper z boundary in the mls grid'
+
+    ## input ports
+    input_port('lidar_samples', '/velodyne_lidar/MultilevelLaserScan').
+        needs_reliable_connection.
+        doc 'timestamped 3d laser scans'
+        
+    input_port('simulated_pointcloud', '/base/samples/Pointcloud').
+        needs_reliable_connection.
+        doc 'simulated pointcloud data'
+        
+    input_port('odometry_samples', '/base/samples/RigidBodyState').
+        needs_reliable_connection.
+        doc 'odometry samples'
+        
+    ## output ports
+    output_port('pose_samples', '/base/samples/RigidBodyState').
+        doc 'timestamped samples of the current pose of the robot.'
+    
+    output_port('envire_map', ro_ptr('std/vector</envire/BinaryEvent>'))
+
+    ## debug
+    property('enable_debug', 'bool', false).
+        doc 'enables debug output'
+    output_port('debug_information', '/graph_slam/VelodyneSlamDebug')
+
+    ## transformer config
+    transformer do
+        max_latency( 0.5 )
+
+        transformation("laser", "body")
+        transformation("body", "odometry")
+
+        align_port("lidar_samples", 0.1)
+        align_port("simulated_pointcloud", 0.1)
+    end
+
+    ## operations
+    operation('generateMap').
+        returns('bool').
+        doc 'generates and updates the environment map'
+    operation('saveEnvironment').
+        returns('bool').
+        argument('value', 'string', 'value').
+        doc 'saves the complete map'
+
+    ## states
+    runtime_states :MISSING_TRANSFORMATION, :GRAPH_OPTIMIZATION_FAILED, :MAP_GENERATION_FAILED, :ADD_VERTEX_FAILED
+    
+    port_driven
+end
+
 
 # Declares a deployment, i.e. an actual executable that contains various tasks.
 deployment "graph_slam_test" do
