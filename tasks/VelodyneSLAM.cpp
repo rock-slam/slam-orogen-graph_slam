@@ -6,6 +6,7 @@
 #include <g2o/core/optimization_algorithm_factory.h>
 #include <graph_slam/vertex_se3_gicp.hpp>
 #include <graph_slam/edge_se3_gicp.hpp>
+#include <graph_slam/graph_slam_config.hpp>
 #include <velodyne_lidar/pointcloudConvertHelper.hpp>
 #include <graph_slam/matrix_helper.hpp>
 
@@ -278,7 +279,7 @@ bool VelodyneSLAM::configureHook()
     debug_information = VelodyneSlamDebug();
     last_vertex_odometry_transformation = envire::TransformWithUncertainty::Identity();
     last_body2odometry = envire::TransformWithUncertainty::Identity();
-    optimizer.setMLSMapConfiguration(_use_mls, "/mls-grid", _grid_size_x, _grid_size_y, _cell_resolution_x, _cell_resolution_y, _grid_min_z, _grid_max_z);
+    optimizer.setMLSMapConfiguration(_use_mls, _mls_config.get(), "/mls-grid", _grid_size_x, _grid_size_y, _cell_resolution_x, _cell_resolution_y, _grid_min_z, _grid_max_z);
     optimizer.setMap2WorldTransformation(Eigen::Isometry3d(map2world.matrix()));
     optimizer.setRobotStart2WorldTransformation(Eigen::Isometry3d(start_pose.matrix()));
     event_filter.reset(new MLSGridEventFilter());
