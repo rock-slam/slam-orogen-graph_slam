@@ -38,6 +38,7 @@ VelodyneSLAM::~VelodyneSLAM()
 void VelodyneSLAM::handleLidarData(const base::Time &ts, const velodyne_lidar::MultilevelLaserScan* lidar_sample, const base::samples::Pointcloud* simulated_pointcloud_sample)
 {
     new_state = RUNNING;
+    last_sample_time = ts;
 
     // get transformations
     Eigen::Affine3d laser2body;
@@ -275,6 +276,7 @@ bool VelodyneSLAM::configureHook()
     try_edges_on_update = 0;
     last_new_vertex.microseconds = 0;
     last_envire_update.microseconds = 0;
+    last_sample_time.microseconds = 0;
     debug_information.time.microseconds = 0;
     debug_information = VelodyneSlamDebug();
     last_vertex_odometry_transformation = envire::TransformWithUncertainty::Identity();
@@ -389,7 +391,7 @@ void VelodyneSLAM::updateHook()
             if( (last_envire_update + base::Time::fromSeconds(_envire_period.value())) < base::Time::now() &&
                     map_updated ) 
             {
-                orocos_emitter->setTime(base::Time::now());
+                orocos_emitter->setTime(last_sample_time);
                 orocos_emitter->flush();
                 map_updated = false;
                 last_envire_update = base::Time::now();

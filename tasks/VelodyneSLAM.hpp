@@ -48,6 +48,7 @@ namespace graph_slam {
         boost::shared_ptr<envire::OrocosEmitter> orocos_emitter;
         boost::shared_ptr<MLSGridEventFilter> event_filter;
         base::Time last_envire_update;
+	base::Time last_sample_time;
         envire::TransformWithUncertainty last_vertex_odometry_transformation;
 	envire::TransformWithUncertainty last_body2odometry;
         graph_slam::ExtendedSparseOptimizer optimizer;
