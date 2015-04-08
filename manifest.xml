@@ -1,6 +1,8 @@
 <package>
     <description brief="Graph based SLAM module">
     </description>
+    <maintainer>Sascha Arnold/sascha.arnold@dfki.de</maintainer>
+    <author>Sascha Arnold/sascha.arnold@dfki.de</author>
     <author>Jakob Schwendner/jakob.schwendner@dfki.de</author>
     <depend package="slam/hogman"/>
     <depend package="slam/envire"/>
