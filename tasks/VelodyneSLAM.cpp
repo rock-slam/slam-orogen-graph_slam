@@ -285,6 +285,7 @@ bool VelodyneSLAM::configureHook()
     optimizer.setMap2WorldTransformation(Eigen::Isometry3d(map2world.matrix()));
     optimizer.setRobotStart2WorldTransformation(Eigen::Isometry3d(start_pose.matrix()));
     event_filter.reset(new MLSGridEventFilter());
+    optimizer.setInitialFootprintRadius(_footprint_radius.value());
     
     g2o::OptimizableGraph::initMultiThreading();
     

@@ -112,6 +112,8 @@ task_context "VelodyneSLAM" do
         doc 'lower z boundary in the mls grid'
     property('grid_max_z', 'double', 50.0).
         doc 'upper z boundary in the mls grid'
+    property('footprint_radius', 'double', 0.0).
+        doc 'radius of the initial footprint'
 
     ## input ports
     input_port('lidar_samples', '/velodyne_lidar/MultilevelLaserScan').

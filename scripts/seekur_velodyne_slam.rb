@@ -69,6 +69,7 @@ Orocos.run "graph_slam::VelodyneSLAM" => "velodyne_slam" do
     velodyne_slam.grid_size_y = 200
     velodyne_slam.cell_resolution_x = 0.1
     velodyne_slam.cell_resolution_y = 0.1
+    velodyne_slam.footprint_radius = 2.5
 
     # connect ports with the task
     velodyne_ports.each do |port|
