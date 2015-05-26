@@ -88,6 +88,8 @@ task_context "VelodyneSLAM" do
         doc 'a apriori reference map will be added to the graph as soon there is a connection to the current map'
     property('start_pose', '/base/samples/RigidBodyState').
         doc 'start pose of the robot in the world frame'
+    property('determine_start_pose_from_apriori_map', 'bool', true).
+        doc 'uses the last pose in apriori map as start pose'
 
     ## envire configuration
     property('envire_period', 'double', 1.0).

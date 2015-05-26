@@ -321,30 +321,34 @@ bool VelodyneSLAM::configureHook()
             else //if(!_start_pose.get().hasValidPosition() || !_start_pose.get().hasValidOrientation())
             {
                 RTT::log(RTT::Info) << "Successfully loaded a-priori map." << RTT::endlog();
-                RTT::log(RTT::Info) << "Load pose of last pointcloud as start pose." << RTT::endlog();
-                // set last vertex pose as start pose
-                std::vector<envire::Pointcloud*> pointclouds = env->getItems<envire::Pointcloud>();
-                if(!pointclouds.empty())
+
+                if(_determine_start_pose_from_apriori_map.value())
                 {
-                    // find pointcloud with the highest id
-                    envire::Pointcloud* pointcloud = 0;
-                    long pc_id = pointclouds.front()->getUniqueIdNumericalSuffix();
-                    for(unsigned i = 1; i < pointclouds.size(); i++)
+                    // set last vertex pose as start pose
+                    RTT::log(RTT::Info) << "Load pose of last pointcloud as start pose." << RTT::endlog();
+                    std::vector<envire::Pointcloud*> pointclouds = env->getItems<envire::Pointcloud>();
+                    if(!pointclouds.empty())
                     {
-                        long id = pointclouds[i]->getUniqueIdNumericalSuffix();
-                        if(id > pc_id)
+                        // find pointcloud with the highest id
+                        envire::Pointcloud* pointcloud = 0;
+                        long pc_id = pointclouds.front()->getUniqueIdNumericalSuffix();
+                        for(unsigned i = 1; i < pointclouds.size(); i++)
                         {
-                            pointcloud = pointclouds[i];
-                            pc_id = id;
+                            long id = pointclouds[i]->getUniqueIdNumericalSuffix();
+                            if(id > pc_id)
+                            {
+                                pointcloud = pointclouds[i];
+                                pc_id = id;
+                            }
+                        }
+                        if(pointcloud)
+                        {
+                            base::Transform3d pc2world = env->relativeTransform(pointcloud->getFrameNode(), env->getRootNode());
+                            optimizer.setRobotStart2WorldTransformation(Eigen::Isometry3d(pc2world.matrix()));
                         }
                     }
-                    if(pointcloud)
-                    {
-                        base::Transform3d pc2world = env->relativeTransform(pointcloud->getFrameNode(), env->getRootNode());
-                        optimizer.setRobotStart2WorldTransformation(Eigen::Isometry3d(pc2world.matrix()));
-                    }
-                }
 
+                }
             }
         }
         catch(std::runtime_error e)
