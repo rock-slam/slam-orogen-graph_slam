@@ -9,6 +9,7 @@
 #include <envire/core/EventHandler.hpp>
 #include <boost/shared_ptr.hpp>
 #include <graph_slam/extended_sparse_optimizer.hpp>
+#include <base/Timeout.hpp>
 
 namespace graph_slam {
     
@@ -62,7 +63,8 @@ namespace graph_slam {
         States new_state;
         VelodyneSlamDebug debug_information;
         base::Time last_new_vertex;
-
+        base::Timeout check_new_edges_timeout;
+        
     protected:
         void handleLidarData(const base::Time &ts, const velodyne_lidar::MultilevelLaserScan* lidar_sample, const base::samples::Pointcloud* simulated_pointcloud_sample = NULL);
         virtual void lidar_samplesTransformerCallback(const base::Time &ts, const ::velodyne_lidar::MultilevelLaserScan &lidar_samples_sample);

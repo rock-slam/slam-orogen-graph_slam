@@ -130,23 +130,25 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, const velodyne_lidar::M
             initial_optimization = true;
             if(_enable_debug)
                 writeOptimizerDebugInformation();
-
-            if(new_vertecies >= 5)
-            {
-                new_vertecies = 0;
-
-                // remove old vertecies
-                MEASURE_TIME(optimizer.removeVerticesFromGrid(), debug_information.remove_vertices_time);
-                
-                // find new edges
-                MEASURE_TIME(optimizer.findEdgeCandidates(), debug_information.find_edge_candidates_time);
-            }
         }
         catch(std::runtime_error e)
         {
             RTT::log(RTT::Error) << "Exception while optimizing graph: " << e.what() << RTT::endlog();
             new_state = GRAPH_OPTIMIZATION_FAILED;
         }
+    }
+    
+    // check for new edge candidates
+    if(new_vertecies >= 5 || (_check_new_edges_time.value() > 0.0 && check_new_edges_timeout.elapsed()))
+    {
+        new_vertecies = 0;
+        check_new_edges_timeout.restart();
+
+        // remove old vertecies
+        MEASURE_TIME(optimizer.removeVerticesFromGrid(), debug_information.remove_vertices_time);
+        
+        // find new edges
+        MEASURE_TIME(optimizer.findEdgeCandidates(), debug_information.find_edge_candidates_time);
     }
 }
 
@@ -277,6 +279,7 @@ bool VelodyneSLAM::configureHook()
     last_new_vertex.microseconds = 0;
     last_envire_update.microseconds = 0;
     last_sample_time.microseconds = 0;
+    check_new_edges_timeout = base::Timeout(base::Time::fromSeconds(_check_new_edges_time.value()));
     debug_information.time.microseconds = 0;
     debug_information = VelodyneSlamDebug();
     last_vertex_odometry_transformation = envire::TransformWithUncertainty::Identity();

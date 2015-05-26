@@ -74,6 +74,8 @@ task_context "VelodyneSLAM" do
         doc 'the translation after a new laser scan is added to the graph'
     property('new_vertex_time', 'double', 30.0).
         doc 'the seconds after which a new laser scan is added to the graph'
+    property('check_new_edges_time', 'double', 2.0).
+        doc 'the time in seconds after which the task searches for new edge candidates'
     property('max_icp_distance', 'double', 1.5).
         doc 'the maximum distance for the search for new icp based transformations'
     property('max_icp_fitness_score', 'double', 1.0).
