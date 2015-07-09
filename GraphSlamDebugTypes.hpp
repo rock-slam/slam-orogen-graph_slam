@@ -3,7 +3,8 @@
 
 #include <vector>
 #include <string>
-#include <base/time.h>
+#include <base/Time.hpp>
+#include <base/Pose.hpp>
 
 namespace graph_slam
 {
@@ -24,6 +25,15 @@ struct VelodyneSlamDebug
     : time(base::Time::now()), graph_num_vertices(0), graph_num_edges(0), 
       graph_chi2_error(0.0), graph_optimization_time(0.0), remove_vertices_time(0.0),
       find_edge_candidates_time(0.0), update_environment_time(0.0), try_edge_candidate_time(0.0) {}
+};
+
+struct PoseProviderUpdate
+{
+    base::Time time;
+    base::Pose body2world;
+    base::Pose body2odometry;
+    
+    PoseProviderUpdate() :time(base::Time::now()) {}
 };
 
 }

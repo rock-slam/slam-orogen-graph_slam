@@ -1,6 +1,7 @@
 /* Generated from orogen/lib/orogen/templates/tasks/Task.cpp */
 
 #include "VelodyneSLAM.hpp"
+#include <GraphSlamDebugTypes.hpp>
 
 #include <g2o/core/factory.h>
 #include <g2o/core/optimization_algorithm_factory.h>
@@ -381,6 +382,12 @@ void VelodyneSLAM::updateHook()
             adjusted_odometry_pose.sourceFrame = _body_frame.get();
             adjusted_odometry_pose.targetFrame = _world_frame.get();
             _pose_samples.write(adjusted_odometry_pose);
+            
+            graph_slam::PoseProviderUpdate update;
+            update.body2odometry = odometry_pose.getPose();
+            update.body2world = adjusted_odometry_pose.getPose();
+            update.time = adjusted_odometry_pose.time;
+            _pose_provider_update.write(update);
         }
     }
     

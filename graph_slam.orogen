@@ -134,6 +134,9 @@ task_context "VelodyneSLAM" do
     
     output_port('envire_map', ro_ptr('std/vector</envire/BinaryEvent>'))
 
+    output_port('pose_provider_update', '/graph_slam/PoseProviderUpdate').
+        doc 'timestamped update samples for the pose provider task.'
+    
     ## debug
     property('enable_debug', 'bool', false).
         doc 'enables debug output'
