@@ -50,7 +50,7 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, const velodyne_lidar::M
         return;
     }
     envire::TransformWithUncertainty body2odometry;
-    if (!_body2odometry.get(ts, body2odometry, false))
+    if (!_body2odometry.get(ts, body2odometry, true))
     {
         RTT::log(RTT::Error) << "skip, have no body2odometry transformation sample!" << RTT::endlog();
         new_state = MISSING_TRANSFORMATION;
