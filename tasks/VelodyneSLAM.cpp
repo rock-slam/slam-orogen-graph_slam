@@ -10,6 +10,8 @@
 #include <graph_slam/graph_slam_config.hpp>
 #include <velodyne_lidar/pointcloudConvertHelper.hpp>
 #include <graph_slam/matrix_helper.hpp>
+#include <graph_slam/pointcloud_helper.hpp>
+
 
 #ifndef MEASURE_TIME
 #define MEASURE_TIME(exp, time_in_s) \
@@ -36,7 +38,9 @@ VelodyneSLAM::~VelodyneSLAM()
 {
 }
 
-void VelodyneSLAM::handleLidarData(const base::Time &ts, const velodyne_lidar::MultilevelLaserScan* lidar_sample, const base::samples::Pointcloud* simulated_pointcloud_sample)
+void VelodyneSLAM::handleLidarData(const base::Time &ts, const ::base::samples::DepthMap* lidar_sample,
+                                   const base::samples::Pointcloud* simulated_pointcloud_sample,
+                                   const ::velodyne_lidar::MultilevelLaserScan* lidar_sample_deprecated)
 {
     new_state = RUNNING;
     last_sample_time = ts;
@@ -75,12 +79,13 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, const velodyne_lidar::M
             if(lidar_sample)
             {
                 // filter point cloud
-                velodyne_lidar::MultilevelLaserScan filtered_lidar_sample;
-                velodyne_lidar::ConvertHelper::filterOutliers(*lidar_sample, filtered_lidar_sample, _maximum_angle_to_neighbor, _minimum_valid_neighbors);
-                
+                base::samples::DepthMap filtered_lidar_sample = *lidar_sample;
+                filterMinDistance(filtered_lidar_sample, 1.0);
+                filterOutliers(filtered_lidar_sample, _maximum_angle_to_neighbor, _minimum_valid_neighbors);
+
                 // convert scan to pointcloud
 		Eigen::Affine3d scanBegin2scanEnd = last_body2odometry.getTransform().inverse() * body2odometry.getTransform();
-                velodyne_lidar::ConvertHelper::convertScanToPointCloud(filtered_lidar_sample, pointcloud, scanBegin2scanEnd.inverse() * laser2body, laser2body);
+                filtered_lidar_sample.convertDepthMapToPointCloud(pointcloud, scanBegin2scanEnd.inverse() * laser2body, laser2body, true);
             }
             else if(simulated_pointcloud_sample)
             {
@@ -89,6 +94,16 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, const velodyne_lidar::M
                 {
                     pointcloud.push_back(laser2body * (*it));
                 }
+            }
+            else if(lidar_sample_deprecated)
+            {
+                // filter point cloud
+                velodyne_lidar::MultilevelLaserScan filtered_lidar_sample;
+                velodyne_lidar::ConvertHelper::filterOutliers(*lidar_sample_deprecated, filtered_lidar_sample, _maximum_angle_to_neighbor, _minimum_valid_neighbors);
+
+                // convert scan to pointcloud
+                Eigen::Affine3d scanBegin2scanEnd = last_body2odometry.getTransform().inverse() * body2odometry.getTransform();
+                velodyne_lidar::ConvertHelper::convertScanToPointCloud(filtered_lidar_sample, pointcloud, scanBegin2scanEnd.inverse() * laser2body, laser2body);
             }
             else
             {
@@ -151,9 +166,15 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, const velodyne_lidar::M
     }
 }
 
-void VelodyneSLAM::lidar_samplesTransformerCallback(const base::Time &ts, const ::velodyne_lidar::MultilevelLaserScan &lidar_sample)
+void VelodyneSLAM::lidar_samplesTransformerCallback(const base::Time &ts, const ::base::samples::DepthMap &lidar_sample)
 {
     handleLidarData(lidar_sample.time, &lidar_sample);
+}
+
+void VelodyneSLAM::lidar_samples_deprecatedTransformerCallback(const base::Time &ts,
+                                                               const ::velodyne_lidar::MultilevelLaserScan &lidar_sample_deprecated)
+{
+    handleLidarData(lidar_sample_deprecated.time, NULL, NULL, &lidar_sample_deprecated);
 }
 
 void VelodyneSLAM::simulated_pointcloudTransformerCallback(const base::Time &ts, const ::base::samples::Pointcloud &simulated_pointcloud_sample)

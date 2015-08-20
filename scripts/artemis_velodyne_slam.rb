@@ -62,7 +62,7 @@ Orocos.run "graph_slam::VelodyneSLAM" => "velodyne_slam" do
 
     # connect ports with the task
     velodyne_ports.each do |port|
-        port.connect_to velodyne_slam.lidar_samples, :type => :buffer, :size => 100
+        port.connect_to velodyne_slam.lidar_samples_deprecated, :type => :buffer, :size => 100
     end
     odometry_port.each do |port|
         port.connect_to velodyne_slam.odometry_samples, :type => :buffer, :size => 1000
