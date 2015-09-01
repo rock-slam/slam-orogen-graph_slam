@@ -161,6 +161,10 @@ task_context "VelodyneSLAM" do
         returns('bool').
         argument('value', 'string', 'value').
         doc 'saves the complete map'
+    operation('activateLidarIntegration').
+        returns('bool').
+        argument('value', 'bool', 'value').
+        doc 'activates or deactivates the lidar sample integration.'
 
     ## states
     runtime_states :MISSING_TRANSFORMATION, :GRAPH_OPTIMIZATION_FAILED, :MAP_GENERATION_FAILED, :ADD_VERTEX_FAILED

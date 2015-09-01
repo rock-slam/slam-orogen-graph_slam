@@ -66,7 +66,7 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, const velodyne_lidar::M
     try_edges_on_update = 1;
 
     Eigen::Affine3d odometry_delta = last_vertex_odometry_transformation.getTransform().inverse() * body2odometry.getTransform();
-    if( last_body2odometry_valid && (odometry_delta.translation().norm() > _vertex_distance.get() || (base::Time::now() - last_new_vertex).toSeconds() > _new_vertex_time) )
+    if( integrate_new_samples && last_body2odometry_valid && (odometry_delta.translation().norm() > _vertex_distance.get() || (base::Time::now() - last_new_vertex).toSeconds() > _new_vertex_time) )
     {
         try
         {
@@ -232,6 +232,16 @@ bool VelodyneSLAM::saveEnvironment(::std::string const & path)
     return false;
 }
 
+bool VelodyneSLAM::activateLidarIntegration(bool b)
+{
+    integrate_new_samples = b;
+    if(integrate_new_samples)
+        RTT::log(RTT::Warning) << "Integration of new samples is activated." << RTT::endlog();
+    else
+        RTT::log(RTT::Warning) << "Note: Integration of new samples is deactivated!" << RTT::endlog();
+    return true;
+}
+
 void VelodyneSLAM::writeOptimizerDebugInformation()
 {
     const g2o::BatchStatisticsContainer& stats = optimizer.batchStatistics();
@@ -272,6 +282,7 @@ bool VelodyneSLAM::configureHook()
     initial_optimization = false;
     map_updated = false;
     last_body2odometry_valid = false;
+    integrate_new_samples = true;
     new_vertecies = 0;
     edge_count = 0;
     try_edges_on_update = 0;

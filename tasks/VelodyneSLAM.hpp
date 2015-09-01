@@ -62,6 +62,7 @@ namespace graph_slam {
         States new_state;
         VelodyneSlamDebug debug_information;
         base::Time last_new_vertex;
+        bool integrate_new_samples;
 
     protected:
         void handleLidarData(const base::Time &ts, const velodyne_lidar::MultilevelLaserScan* lidar_sample, const base::samples::Pointcloud* simulated_pointcloud_sample = NULL);
@@ -69,6 +70,7 @@ namespace graph_slam {
         virtual void simulated_pointcloudTransformerCallback(const base::Time &ts, const ::base::samples::Pointcloud &simulated_pointcloud_sample);
         virtual bool generateMap();
         virtual bool saveEnvironment(::std::string const & path);
+        virtual bool activateLidarIntegration(bool b);
         void writeOptimizerDebugInformation();
 
     public:
