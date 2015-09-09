@@ -132,7 +132,7 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, const velodyne_lidar::M
             if(_enable_debug)
                 writeOptimizerDebugInformation();
 
-            if(new_vertecies >= 5)
+            if(new_vertecies >= _run_icp_candidate_search_counter.value())
             {
                 new_vertecies = 0;
 

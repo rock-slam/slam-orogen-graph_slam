@@ -80,6 +80,8 @@ task_context "VelodyneSLAM" do
         doc 'the maximum fitness score an icp transformation can have to be valid'
     property('run_graph_optimization_counter', 'int', 5).
         doc 'the graph will be optimized every n edges'
+    property('run_icp_candidate_search_counter', 'int', 2).
+        doc 'Serach for ICP candidates in the |max_icp_distance| neigborhood every n vertices'
     property('vertex_grid_cell_resolution', 'double', 0.5).
         doc 'cell resolution of the max vertex grid'
     property('max_vertices_per_cell', 'int', 5).
