@@ -9,6 +9,8 @@
 #include <envire/core/EventHandler.hpp>
 #include <boost/shared_ptr.hpp>
 #include <graph_slam/extended_sparse_optimizer.hpp>
+#include <base/samples/DepthMap.hpp>
+#include <velodyne_lidar/MultilevelLaserScan.h>
 
 namespace graph_slam {
     
@@ -65,8 +67,11 @@ namespace graph_slam {
         bool integrate_new_samples;
 
     protected:
-        void handleLidarData(const base::Time &ts, const velodyne_lidar::MultilevelLaserScan* lidar_sample, const base::samples::Pointcloud* simulated_pointcloud_sample = NULL);
-        virtual void lidar_samplesTransformerCallback(const base::Time &ts, const ::velodyne_lidar::MultilevelLaserScan &lidar_samples_sample);
+        void handleLidarData(const base::Time &ts, const ::base::samples::DepthMap* lidar_sample,
+                             const base::samples::Pointcloud* simulated_pointcloud_sample = NULL,
+                             const ::velodyne_lidar::MultilevelLaserScan* lidar_sample_deprecated = NULL);
+        virtual void lidar_samplesTransformerCallback(const base::Time &ts, const ::base::samples::DepthMap &lidar_sample);
+        virtual void lidar_samples_deprecatedTransformerCallback(const base::Time &ts, const ::velodyne_lidar::MultilevelLaserScan &lidar_sample_deprecated);
         virtual void simulated_pointcloudTransformerCallback(const base::Time &ts, const ::base::samples::Pointcloud &simulated_pointcloud_sample);
         virtual bool generateMap();
         virtual bool saveEnvironment(::std::string const & path);

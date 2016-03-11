@@ -120,9 +120,13 @@ task_context "VelodyneSLAM" do
         doc 'radius of the initial footprint'
 
     ## input ports
-    input_port('lidar_samples', '/velodyne_lidar/MultilevelLaserScan').
+    input_port('lidar_samples', '/base/samples/DepthMap').
         needs_reliable_connection.
         doc 'timestamped 3d laser scans'
+
+    input_port('lidar_samples_deprecated', '/velodyne_lidar/MultilevelLaserScan').
+        needs_reliable_connection.
+        doc 'timestamped 3d laser scans. Note: this type is deprecated!'
         
     input_port('simulated_pointcloud', '/base/samples/Pointcloud').
         needs_reliable_connection.
@@ -154,6 +158,7 @@ task_context "VelodyneSLAM" do
         transformation("body", "odometry")
 
         align_port("lidar_samples", 0.1)
+        align_port("lidar_samples_deprecated", 0.1)
         align_port("simulated_pointcloud", 0.1)
     end
 
