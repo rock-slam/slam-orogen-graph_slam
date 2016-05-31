@@ -279,6 +279,28 @@ void VelodyneSLAM::writeOptimizerDebugInformation()
     debug_information.graphviz = stream.str();
 }
 
+void VelodyneSLAM::body2OdometryTransformerCallback(const base::Time& ts, const transformer::Transformation &tr)
+{
+    
+    base::samples::RigidBodyState adjusted_odometry_pose, odometry_pose;
+    if(!tr.get(ts, odometry_pose))
+    {
+        throw std::runtime_error("Internal Error");
+    }
+    if(optimizer.adjustOdometryPose(odometry_pose, adjusted_odometry_pose))
+    {
+        adjusted_odometry_pose.sourceFrame = _body_frame.get();
+        adjusted_odometry_pose.targetFrame = _world_frame.get();
+        _pose_samples.write(adjusted_odometry_pose);
+        
+        graph_slam::PoseProviderUpdate update;
+        update.body2odometry = odometry_pose.getPose();
+        update.body2world = adjusted_odometry_pose.getPose();
+        update.time = adjusted_odometry_pose.time;
+        _pose_provider_update.write(update);
+    }
+}
+
 /// The following lines are template definitions for the various state machine
 // hooks defined by Orocos::RTT. See VelodyneSLAM.hpp for more detailed
 // documentation about them.
@@ -377,6 +399,9 @@ bool VelodyneSLAM::configureHook()
             RTT::log(RTT::Error) << "Failed to load a-priori map: " << e.what() << RTT::endlog();
         }
     }
+
+    _transformer.registerTransformCallback(_body2odometry, boost::bind(&VelodyneSLAM::body2OdometryTransformerCallback, this, _1, _2));
+
     
     return true;
 }
@@ -407,25 +432,6 @@ void VelodyneSLAM::updateHook()
         optimizer.setComputeBatchStatistics(true);
     
     VelodyneSLAMBase::updateHook();
-    
-    // write adjusted odometry pose
-    base::samples::RigidBodyState odometry_pose;
-    if(_odometry_samples.readNewest(odometry_pose) == RTT::NewData) 
-    {
-        base::samples::RigidBodyState adjusted_odometry_pose = odometry_pose;
-        if(optimizer.adjustOdometryPose(odometry_pose, adjusted_odometry_pose))
-        {
-            adjusted_odometry_pose.sourceFrame = _body_frame.get();
-            adjusted_odometry_pose.targetFrame = _world_frame.get();
-            _pose_samples.write(adjusted_odometry_pose);
-            
-            graph_slam::PoseProviderUpdate update;
-            update.body2odometry = odometry_pose.getPose();
-            update.body2world = adjusted_odometry_pose.getPose();
-            update.time = adjusted_odometry_pose.time;
-            _pose_provider_update.write(update);
-        }
-    }
     
     // write envire updates
     if( orocos_emitter.use_count() > 0 )

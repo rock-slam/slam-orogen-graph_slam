@@ -70,6 +70,7 @@ namespace graph_slam {
         void handleLidarData(const base::Time &ts, const ::base::samples::DepthMap* lidar_sample,
                              const base::samples::Pointcloud* simulated_pointcloud_sample = NULL,
                              const ::velodyne_lidar::MultilevelLaserScan* lidar_sample_deprecated = NULL);
+        void body2OdometryTransformerCallback(const base::Time &ts, const transformer::Transformation &tr);
         virtual void lidar_samplesTransformerCallback(const base::Time &ts, const ::base::samples::DepthMap &lidar_sample);
         virtual void lidar_samples_deprecatedTransformerCallback(const base::Time &ts, const ::velodyne_lidar::MultilevelLaserScan &lidar_sample_deprecated);
         virtual void simulated_pointcloudTransformerCallback(const base::Time &ts, const ::base::samples::Pointcloud &simulated_pointcloud_sample);
