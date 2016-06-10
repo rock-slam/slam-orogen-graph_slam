@@ -291,6 +291,7 @@ void VelodyneSLAM::body2OdometryTransformerCallback(const base::Time& ts, const 
     {
         adjusted_odometry_pose.sourceFrame = _body_frame.get();
         adjusted_odometry_pose.targetFrame = _world_frame.get();
+        adjusted_odometry_pose.time = ts;
         _pose_samples.write(adjusted_odometry_pose);
         
         graph_slam::PoseProviderUpdate update;
