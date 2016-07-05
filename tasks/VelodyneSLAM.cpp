@@ -119,7 +119,7 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, const ::base::samples::
 
             new_vertecies++;
         }
-        catch(std::runtime_error e)
+        catch(const std::runtime_error & e)
         {
             RTT::log(RTT::Error) << "Exception while adding new lidar sample: " << e.what() << RTT::endlog();
             new_state = ADD_VERTEX_FAILED;
@@ -158,7 +158,7 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, const ::base::samples::
                 MEASURE_TIME(optimizer.findEdgeCandidates(), debug_information.find_edge_candidates_time);
             }
         }
-        catch(std::runtime_error e)
+        catch(const std::runtime_error & e)
         {
             RTT::log(RTT::Error) << "Exception while optimizing graph: " << e.what() << RTT::endlog();
             new_state = GRAPH_OPTIMIZATION_FAILED;
@@ -224,7 +224,7 @@ bool VelodyneSLAM::generateMap()
             debug_information.update_environment_time
         );
     }
-    catch(std::runtime_error e)
+    catch(const std::runtime_error & e)
     {
         RTT::log(RTT::Error) << "Exception while generating MLS map: " << e.what() << RTT::endlog();
         new_state = MAP_GENERATION_FAILED;
@@ -246,7 +246,7 @@ bool VelodyneSLAM::saveEnvironment(::std::string const & path)
             optimizer.getEnvironment()->serialize(path);
         return true;
     }
-    catch(std::runtime_error e)
+    catch(const std::runtime_error & e)
     {
         RTT::log(RTT::Error) << "Exception while serialization of the map data: " << e.what() << RTT::endlog();
     }
@@ -395,7 +395,7 @@ bool VelodyneSLAM::configureHook()
                 }
             }
         }
-        catch(std::runtime_error e)
+        catch(const std::runtime_error & e)
         {
             RTT::log(RTT::Error) << "Failed to load a-priori map: " << e.what() << RTT::endlog();
         }
@@ -461,7 +461,7 @@ void VelodyneSLAM::updateHook()
         {
             MEASURE_TIME(optimizer.tryBestEdgeCandidates(1), debug_information.try_edge_candidate_time);
         }
-        catch(std::runtime_error e)
+        catch(const std::runtime_error & e)
         {
             RTT::log(RTT::Error) << "Failed to add new edge from candidates: " << e.what() << RTT::endlog();
         }
