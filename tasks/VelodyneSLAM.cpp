@@ -133,7 +133,7 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, const ::base::samples::
     last_body2odometry_valid = true;
 
     // optimization
-    unsigned new_edges = optimizer.edges().size() - edge_count;
+    int new_edges = optimizer.edges().size() - edge_count;
     if(new_edges >= _run_graph_optimization_counter || (!initial_optimization && optimizer.vertices().size() >= 2))
     {
         edge_count = optimizer.edges().size();
@@ -147,11 +147,11 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, const ::base::samples::
             if(_enable_debug)
                 writeOptimizerDebugInformation();
 
-            if(new_vertecies >= _run_icp_candidate_search_counter.value())
+            if(int(new_vertecies) >= _run_icp_candidate_search_counter.value())
             {
                 new_vertecies = 0;
 
-                // remove old vertecies
+                // remove old vertices
                 MEASURE_TIME(optimizer.removeVerticesFromGrid(), debug_information.remove_vertices_time);
                 
                 // find new edges
@@ -184,9 +184,7 @@ void VelodyneSLAM::simulated_pointcloudTransformerCallback(const base::Time &ts,
     simulated_pointcloud.time = simulated_pointcloud_sample.time;
     for(unsigned i = 0; i < simulated_pointcloud_sample.points.size(); i++)
     {
-        if(!boost::math::isnan(simulated_pointcloud_sample.points[i].x()) && 
-           !boost::math::isnan(simulated_pointcloud_sample.points[i].y()) &&
-           !boost::math::isnan(simulated_pointcloud_sample.points[i].z()))
+        if(!simulated_pointcloud_sample.points[i].hasNaN())
         {
             simulated_pointcloud.points.push_back(simulated_pointcloud_sample.points[i]);
         }
@@ -320,7 +318,7 @@ bool VelodyneSLAM::configureHook()
         start_pose = _start_pose.get().getTransform();
     }
     
-    // setup inital configuration
+    // setup initial configuration
     last_state = PRE_OPERATIONAL;
     new_state = RUNNING;
     initial_optimization = false;
