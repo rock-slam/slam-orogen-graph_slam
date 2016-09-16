@@ -85,7 +85,7 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, const ::base::samples::
 
                 // convert scan to pointcloud
 		Eigen::Affine3d scanBegin2scanEnd = last_body2odometry.getTransform().inverse() * body2odometry.getTransform();
-                filtered_lidar_sample.convertDepthMapToPointCloud(pointcloud, scanBegin2scanEnd.inverse() * laser2body, laser2body, true);
+                filtered_lidar_sample.convertDepthMapToPointCloud(pointcloud, scanBegin2scanEnd.inverse() * laser2body, laser2body, true, true, false);
             }
             else if(simulated_pointcloud_sample)
             {
