@@ -13,6 +13,7 @@
     <depend package="image_processing/orogen/stereo"/>
     <depend package="gui/vizkit3d"/>
     <depend package="drivers/velodyne_lidar"/>
+    <depend package="perception/depth_map_preprocessing"/>
 
     <tags>needs_opt</tags>
 </package>

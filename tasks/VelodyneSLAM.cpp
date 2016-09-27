@@ -10,7 +10,7 @@
 #include <graph_slam/graph_slam_config.hpp>
 #include <velodyne_lidar/pointcloudConvertHelper.hpp>
 #include <graph_slam/matrix_helper.hpp>
-#include <graph_slam/pointcloud_helper.hpp>
+#include <depth_map_preprocessing/Filters.hpp>
 
 
 #ifndef MEASURE_TIME
@@ -80,8 +80,8 @@ void VelodyneSLAM::handleLidarData(const base::Time &ts, const ::base::samples::
             {
                 // filter point cloud
                 base::samples::DepthMap filtered_lidar_sample = *lidar_sample;
-                filterMinDistance(filtered_lidar_sample, 1.0);
-                filterOutliers(filtered_lidar_sample, _maximum_angle_to_neighbor, _minimum_valid_neighbors);
+                depth_map_preprocessing::Filters::filterMinDistance(filtered_lidar_sample, 1.0);
+                depth_map_preprocessing::Filters::filterOutliers(filtered_lidar_sample, _maximum_angle_to_neighbor.value(), _minimum_valid_neighbors.value());
 
                 // convert scan to pointcloud
 		Eigen::Affine3d scanBegin2scanEnd = last_body2odometry.getTransform().inverse() * body2odometry.getTransform();

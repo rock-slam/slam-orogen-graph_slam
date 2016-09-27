@@ -6,6 +6,7 @@ using_library 'graph_slam'
 using_library 'vizkit3d'
 using_library 'g2o'
 using_library 'velodyne_lidar'
+using_library 'depth_map_preprocessing'
 
 import_types_from 'base'
 import_types_from 'stereo'
@@ -63,7 +64,7 @@ task_context "VelodyneSLAM" do
     property 'world_frame', '/std/string', 'world'
     
     ## point cloud filter parameter
-    property('maximum_angle_to_neighbor', 'double', 2.53).
+    property('maximum_angle_to_neighbor', 'double', 0.95).
         doc('valid neigbors have an angle not greater than this value.').
         doc('the angle is always defined from the origin to the more distant point.')
     property('minimum_valid_neighbors', 'int', 2).
